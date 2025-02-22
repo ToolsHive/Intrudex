@@ -1,0 +1,12 @@
+{% extends "baseoff.html" %}
+
+{% block title %}Intrudex | Dashboard{% endblock %}
+
+{% block content %}
+    <h1>Dashboard</h1>
+    <p>Welcome to the dashboard!</p>
+    <p>Here you can see all the data from the sensors and the actuators.</p>
+    <p>Also, you can control the actuators from here.</p>
+    <p>Enjoy!</p>
+    <a href="{{ url_for('logout') }}">Logout</a>
+{% endblock %}
