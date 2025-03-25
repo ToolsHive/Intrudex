@@ -1,0 +1,93 @@
+{
+    // **************************************
+    // * General Editor Settings            *
+    // **************************************
+
+    // Automatically save files when the window loses focus
+    "files.autoSave": "onWindowChange",
+    "files.autoSaveDelay": 1000,
+
+    // Display line numbers and render whitespace characters
+    "editor.lineNumbers": "on",
+    "editor.renderWhitespace": "all",
+
+    // Cursor and tab settings
+    "editor.cursorBlinking": "smooth",
+    "editor.tabSize": 4,
+    "editor.tabCompletion": "on",
+
+    // Enable final newline in files
+    "files.insertFinalNewline": true,
+
+    // Suggestion settings
+    "editor.suggest.showSnippets": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggestOnTriggerCharacters": true,
+
+    // Enable code lens and hover information
+    "editor.codeLens": true,
+    "editor.hover.enabled": true,
+
+    // **************************************
+    // * Appearance Settings                *
+    // **************************************
+
+    // Set color theme and smooth scrolling
+    "workbench.colorTheme": "Shades of Purple",
+    "editor.smoothScrolling": true,
+
+    // Disable minimap for a cleaner UI
+    "editor.minimap.enabled": false,
+
+    // Enable bracket pair colorization for better code readability
+    "editor.bracketPairColorization.enabled": true,
+
+    // **************************************
+    // * CSS, SCSS & Tailwind Formatting    *
+    // **************************************
+
+    // Ignore unknown @rules in CSS linting (useful for Tailwind CSS)
+    "css.lint.unknownAtRules": "ignore",
+
+    // **************************************
+    // * File Handling & Encoding Settings  *
+    // **************************************
+
+    // Set default line endings to LF (useful for WSL & Linux environments)
+    "files.eol": "\n",
+
+    // Use UTF-8 encoding for files
+    "files.encoding": "utf8",
+
+    // **************************************
+    // * Auto-formatting & Suggestions      *
+    // **************************************
+
+    // Enable bracket auto-closing
+    "editor.autoClosingBrackets": "always",
+
+    // Enable quick suggestions inside comments and strings
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": true,
+        "strings": true
+    },
+
+    // Disable auto-formatting on paste, type, and save
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false,
+    "editor.formatOnSave": false,
+
+    // Enable word wrap with a 90-character column limit
+    "editor.wordWrapColumn": 90,
+
+    // Enable font ligatures for better code readability
+    "editor.fontLigatures": true,
+
+    // **************************************
+    // * Terminal Settings                  *
+    // **************************************
+
+    // Set default terminal profile to Zsh
+    "terminal.integrated.defaultProfile.linux": "zsh"
+}

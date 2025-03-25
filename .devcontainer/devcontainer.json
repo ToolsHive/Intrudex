@@ -1,0 +1,56 @@
+{
+    "name": "Intrudex",
+    "dockerFile": "Dockerfile",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // ==================================
+				// 🌟 UI & THEMES 
+				// ==================================
+                "ahmadawais.shades-of-purple", 
+                "thang-nm.catppuccin-perfect-icons", 
+
+                // ==================================
+				// 🛠️ PRODUCTIVITY & UI Enhancements
+				// ==================================
+                "usernamehw.errorlens",  
+                "Gruntfuggly.todo-tree",
+                "oderwat.indent-rainbow",
+                "yzhang.markdown-all-in-one",
+                "kamikillerto.vscode-colorize",
+                "piotrpalarz.vscode-gitignore-generator", 
+
+                // ==================================
+				// 🐍  Python Development
+				// ==================================
+                "wholroyd.jinja", 
+                "ms-python.python",  
+                "ms-python.debugpy",
+                "cstrap.flask-snippets", 
+                "KevinRose.vsc-python-indent",  
+
+                // ==================================
+				// ©️  C++ & CMake Development
+				// ==================================
+                "twxs.cmake",  
+                "ms-vscode.cpptools",  
+                "ms-vscode.cpptools-extension-pack",  
+
+                // ==================================
+				// 🚀 WEB DEVELOPMENT
+				// ==================================
+                "esbenp.prettier-vscode",              		
+                "bradlc.vscode-tailwindcss",  
+                "xabikos.JavaScriptSnippets",
+				"streetsidesoftware.code-spell-checker",  
+
+                // ==================================
+                //  NSIS Installer Development
+				// ==================================
+                "idleberg.nsis"
+            ]
+        }
+    },
+    "postCreateCommand": "pip install -r requirements.txt || true",
+    "remoteUser": "vscode"
+}
