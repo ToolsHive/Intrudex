@@ -1,0 +1,64 @@
+<Sysmon schemaversion="4.82">
+    <HashAlgorithms>sha256</HashAlgorithms>
+    <EventFiltering>
+
+        <!-- Process Creation -->
+        <ProcessCreate onmatch="include">
+            <CommandLine condition="contains any">powershell,cmd.exe,wmic,certutil,regsvr32,mshta,taskkill</CommandLine>
+        </ProcessCreate>
+
+        <!-- File Time Manipulation -->
+        <FileCreateTime onmatch="include">
+            <Image condition="end with">.exe</Image>
+        </FileCreateTime>
+
+        <!-- File Creation (Payloads) -->
+        <FileCreate onmatch="include">
+            <TargetFilename condition="end with">.exe,.dll,.bat,.vbs,.ps1</TargetFilename>
+        </FileCreate>
+
+        <!-- Network Connections -->
+        <NetworkConnect onmatch="include">
+            <Image condition="contains">powershell,cmd.exe,python.exe,nc.exe</Image>
+        </NetworkConnect>
+
+        <!-- DNS Queries -->
+        <DnsQuery onmatch="include">
+            <QueryName condition="contains any">.xyz,.top,.tk</QueryName>
+        </DnsQuery>
+
+        <!-- Driver Loads -->
+        <DriverLoad onmatch="include" />
+
+        <!-- Image Loads -->
+        <ImageLoad onmatch="exclude">
+            <ImageLoaded condition="end with">ntdll.dll</ImageLoaded>
+        </ImageLoad>
+
+        <!-- Clipboard Access (Very Rare) -->
+        <ClipboardChange onmatch="include" />
+
+        <!-- Named Pipe Events -->
+        <PipeEvent onmatch="include" />
+
+        <!-- Remote Thread Injection -->
+        <CreateRemoteThread onmatch="include" />
+
+        <!-- Raw Disk Access -->
+        <RawAccessRead onmatch="include" />
+
+        <!-- Process Access (e.g., LSASS targeting) -->
+        <ProcessAccess onmatch="include">
+            <GrantedAccess condition="contains">0x1fffff</GrantedAccess>
+        </ProcessAccess>
+
+        <!-- Registry Persistence -->
+        <RegistryEvent onmatch="include">
+            <TargetObject condition="contains any">Run,RunOnce,RunServices,Image File Execution Options</TargetObject>
+        </RegistryEvent>
+
+        <!-- WMI Usage -->
+        <WmiEvent onmatch="include" />
+
+    </EventFiltering>
+</Sysmon>
