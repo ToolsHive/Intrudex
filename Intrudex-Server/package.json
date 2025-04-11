@@ -1,0 +1,23 @@
+{
+  "name": "intrudex-server",
+  "version": "1.0.0",
+  "description": "Server for my project",
+  "private": "true",
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./app/static/input.css -o ./app/static//style.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.3",
+    "tailwindcss": "^4.1.3"
+  },
+  "author": "Armoghan-ul-Mohmin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ToolsHive/Intrudex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ToolsHive/Intrudex/issues"
+  },
+  "homepage": "https://github.com/ToolsHive/Intrudex#readme"
+}
