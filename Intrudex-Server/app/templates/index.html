@@ -1,11 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>INTRUDEX</title>
-  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
-</head>
-<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
-  <h1 class="text-4xl font-bold">INTRUDEX Server Online</h1>
+{% extends "base.html" %}
+
+{% block title %}INTRUDEX{% endblock %}
+
+{% block content %}
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4 sm:p-6">
+  <div class="text-center sm:text-left">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">INTRUDEX Server Online</h1>
+    <a href="{{ url_for('auth.logout') }}"
+       class="inline-block text-sm md:text-base text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded shadow sm:w-auto">
+      Logout
+    </a>
+  </div>
 </body>
-</html>
+{% endblock %}

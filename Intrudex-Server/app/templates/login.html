@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}INTRUDEX{% endblock %}
+
+{% block content %}
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen flex items-center justify-center px-4">
+
+  <div class="bg-white/5 backdrop-blur-lg border border-white/10 shadow-2xl rounded-2xl p-8 sm:p-10 w-full max-w-md text-white relative">
+
+    <!-- Logo -->
+    <div class="flex justify-center mb-6">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
+        🔒
+      </div>
+    </div>
+
+    <h2 class="text-3xl font-extrabold text-center mb-4">Welcome to <span class="text-blue-500">INTRUDEX</span></h2>
+    <br>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <p class="text-red-400 text-sm text-center">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Username</label>
+        <input type="text" name="username" required placeholder="Enter your username"
+               class="w-full px-4 py-2 rounded-xl bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Password</label>
+        <input type="password" name="password" required placeholder="••••••••"
+               class="w-full px-4 py-2 rounded-xl bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+      </div>
+
+      <button type="submit"
+              class="w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-purple-600 hover:to-pink-600 rounded-xl font-semibold shadow-md transition-transform hover:scale-[1.02]">
+        Log In
+      </button>
+    </form>
+
+    <div class="mt-6 text-center text-xs text-gray-500">
+      &copy; {{ 2025 }} INTRUDEX. All rights reserved.
+    </div>
+  </div>
+</body>
+{% endblock %}
