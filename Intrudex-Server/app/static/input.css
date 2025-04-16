@@ -1,1 +1,72 @@
 @import "tailwindcss";
+
+/* ------------------------------
+   Custom Fonts
+--------------------------------*/
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('./fonts/Ubuntu-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('./fonts/Ubuntu-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('./fonts/Ubuntu-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* ------------------------------
+   Tailwind Theme Variables
+--------------------------------*/
+@theme {
+  --font-heading: 'Roboto', sans-serif;
+  --font-body: 'Ubuntu', sans-serif;
+}
+
+/* ------------------------------
+   Global Typography
+--------------------------------*/
+html {
+  @apply h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
+}
+
+body {
+  font-family: var(--font-body), sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), sans-serif;
+}
+
+/* ------------------------------
+   Components
+--------------------------------*/
+.danger-button {
+  @apply inline-block bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-medium text-white transition;
+}

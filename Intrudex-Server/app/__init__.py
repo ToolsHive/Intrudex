@@ -1,9 +1,11 @@
+import os
 from flask import Flask
 from dotenv import load_dotenv
-import os
 
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
+from app.routes.errors import errors_bp
+
 from app.models.auth import db
 
 
@@ -20,4 +22,5 @@ def create_app():
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(errors_bp)
     return app
