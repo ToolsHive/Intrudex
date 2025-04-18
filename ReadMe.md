@@ -37,9 +37,10 @@
     - [2. Create a Virtual Environment](#2-create-a-virtual-environment)
     - [3. Install Dependencies](#3-install-dependencies)
     - [4. Environment Configuration](#4-environment-configuration)
-    - [5. Initialize the Database](#5-initialize-the-database)
-    - [6. Run the Server](#6-run-the-server)
-    - [7. Admin Panel](#7-admin-panel)
+    - [5. Build Styles](#5-build-styles)
+    - [6. Initialize the Database](#6-initialize-the-database)
+    - [7. Run the Server](#7-run-the-server)
+    - [8. Admin Panel](#8-admin-panel)
 - [📜 Code of Conduct](#-code-of-conduct)
 - [⚖️ License](#️-license)
 
@@ -88,6 +89,7 @@ The **INTRUDEX Server** is the server-side component of the Intrusion Detection 
 ### ⚙️ Prerequisites
 - Python 3.8+
 - Git
+- NodeJs , NPM
 - (Optional) PostgreSQL (if not using SQLite)
 
 ---
@@ -135,7 +137,17 @@ DATABASE_URL=postgresql://username:password@localhost/intrudex
 
 ---
 
-#### 5. Initialize the Database
+#### 5. Build Styles 
+
+Build the tailwind Css for the project
+
+```bash
+npm run buils
+```
+
+---
+
+#### 6. Initialize the Database
 Run the following script to create the database and an admin user:
 
 ```bash
@@ -149,7 +161,7 @@ You will be prompted to enter:
 
 ---
 
-#### 6. Run the Server
+#### 7. Run the Server
 Ensure your `.env` file is ready, then run:
 
 ```bash
@@ -163,7 +175,7 @@ python run.py
 
 ---
 
-#### 7. Admin Panel
+#### 8. Admin Panel
 - **URL**: [http://localhost](http://localhost)  
 - **Access**: Use the credentials set during `init_db.py`.
 
