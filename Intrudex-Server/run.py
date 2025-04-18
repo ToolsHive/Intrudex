@@ -15,17 +15,23 @@ mode = os.getenv("MODE", "development").lower()
 
 # Get screen size using screeninfo
 def get_screen_size():
-    monitor = get_monitors()[0]  # Get primary monitor
-    return monitor.width, monitor.height
+    try:
+        monitor = get_monitors()[0]  # Get primary monitor
+        return monitor.width, monitor.height
+    except:
+        return 1920, 1080
+
+def is_running_in_docker():
+    return os.path.exists('/.dockerenv')
 
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_RUN_PORT', 5000))
     host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
     debug = bool(int(os.getenv('FLASK_DEBUG', 1)))
 
-    if mode == "development":
-        app.run(host=host, port=port, debug=debug)
-    else:
+    if is_running_in_docker():
+        app.run(host='0.0.0.0', port=port, debug=debug)
+    elif mode == 'production':
         width, height = get_screen_size()
         window = webview.create_window(
             'Intrudex Server',
@@ -36,3 +42,5 @@ if __name__ == '__main__':
             fullscreen=False
         )
         webview.start()
+    else:
+        app.run(host=host, port=port, debug=debug)

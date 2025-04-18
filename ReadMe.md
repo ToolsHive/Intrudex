@@ -77,7 +77,7 @@ Intrudex leverages **Sigma rules** to detect threats in **Windows Event Logs**, 
 | **Database**        | SQLite                   |
 | **Remote Communication** | REST API (Flask)    |
 | **Self-Healing**    | Windows Registry, Task Scheduler |
-| **Installer**       | NSIS                     |
+| **Installer**       | NSIS / INNO                    |
 
 ---
 
