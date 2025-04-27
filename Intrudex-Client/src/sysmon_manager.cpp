@@ -1,20 +1,17 @@
-#include "../header/sysmon_manager.h"
 #include <cstdlib>
 #include <iostream>
 
-bool SysmonManager::installSysmon(const std::string& sysmonPath, const std::string& configPath) {
-    // Command to install Sysmon with configuration
-    std::string installCommand = sysmonPath + " -accepteula -i " + configPath;
+#include "../header/sysmon_manager.h"
 
-    // Execute the command
+
+bool SysmonManager::install(const std::string& sysmonPath, const std::string& configPath) {
+    const std::string installCommand = sysmonPath + " -accepteula -i " + configPath;
 
     if (const int result = system(installCommand.c_str()); result == 0) {
-        std::cout << "Sysmon installed successfully." << std::endl;
+        std::cout << "[SysmonManager] Sysmon installed successfully." << std::endl;
         return true;
     } else {
-        std::cout << "Failed to install Sysmon." << std::endl;
+        std::cerr << "[SysmonManager] Failed to install Sysmon." << std::endl;
         return false;
     }
 }
-
-
