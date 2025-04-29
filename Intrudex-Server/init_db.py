@@ -1,18 +1,17 @@
-# init_db.py
-from app import create_app
+import click
+from flask import current_app
 from app.models.auth import db, User
 import getpass
 
-app = create_app()
+@click.command("create-admin")
+def create_admin():
+    """Create an admin user interactively."""
+    with current_app.app_context():
+        username = input("Enter admin username: ")
+        if User.query.filter_by(username=username).first():
+            print(f"⚠️ User '{username}' already exists.")
+            return
 
-with app.app_context():
-    db.create_all()
-    print("✅ Database and tables created!")
-
-    username = input("Enter admin username: ")
-    if User.query.filter_by(username=username).first():
-        print(f"⚠️ User '{username}' already exists.")
-    else:
         password = getpass.getpass("Enter admin password: ")
         confirm_password = getpass.getpass("Confirm admin password: ")
 

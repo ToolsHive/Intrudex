@@ -1,13 +1,16 @@
 import os
 from flask import Flask
 from dotenv import load_dotenv
+from flask_migrate import Migrate
 
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.errors import errors_bp
 
 from app.models.auth import db
+from app.models.logs import db
 
+from init_db import create_admin
 
 
 def create_app():
@@ -19,6 +22,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False') == 'True'
 
     db.init_app(app)
+    migrate = Migrate(app, db)
+    app.cli.add_command(create_admin)
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)

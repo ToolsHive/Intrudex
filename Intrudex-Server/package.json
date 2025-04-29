@@ -4,14 +4,21 @@
   "description": "Sigma-Based Intrusion Detection and Prevention System (Server-side)",
   "private": "true",
   "scripts": {
-    "dev": "tailwindcss -i ./app/static/input.css -o ./app/static/style.css --watch",
-    "build": "tailwindcss -i ./app/static/input.css -o ./app/static/style.css --minify",
+    "dev": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/style.css --watch",
+    "build": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/style.css --minify",
+    "copy-vendor": "vendor-copy",
+    "postinstall": "vendor-copy",
     "clean": "rm -rf node_modules package-lock.json",
     "reinstall": "npm run clean && npm install"
   },
+  "dependencies": {
+    "chart.js": "^4.4.9",
+    "sweetalert2": "^11.19.1"
+  },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.3",
-    "tailwindcss": "^4.1.3"
+    "tailwindcss": "^4.1.3",
+    "vendor-copy": "^3.0.1"
   },
   "keywords": [
     "Intrudex",
@@ -31,5 +38,15 @@
   "bugs": {
     "url": "https://github.com/ToolsHive/Intrudex/issues"
   },
-  "homepage": "https://github.com/ToolsHive/Intrudex#readme"
+  "homepage": "https://github.com/ToolsHive/Intrudex#readme",
+  "vendorCopy": [
+    {
+      "from": "node_modules/chart.js/dist/chart.js",
+      "to": "app/static/js/chart.min.js"
+    },
+    {
+      "from": "node_modules/sweetalert2/dist/sweetalert2.min.js",
+      "to": "app/static/js/sweetalert2.min.js"
+    }
+  ]
 }

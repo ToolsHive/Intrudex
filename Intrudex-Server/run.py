@@ -1,8 +1,10 @@
 import os
+
 import webview
-from app import create_app
 from dotenv import load_dotenv
 from screeninfo import get_monitors
+
+from app import create_app
 
 # Load environment variables
 load_dotenv()
@@ -16,7 +18,7 @@ mode = os.getenv("MODE", "development").lower()
 # Get screen size using screeninfo
 def get_screen_size():
     try:
-        monitor = get_monitors()[0]  # Get primary monitor
+        monitor = get_monitors()[0]
         return monitor.width, monitor.height
     except:
         return 1920, 1080

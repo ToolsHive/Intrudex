@@ -142,16 +142,19 @@ DATABASE_URL=postgresql://username:password@localhost/intrudex
 Build the tailwind Css for the project
 
 ```bash
-npm run buils
+npm run build
 ```
 
 ---
 
 #### 6. Initialize the Database
-Run the following script to create the database and an admin user:
+Use **Flask-Migrate** to initialize and apply database migrations:
 
 ```bash
-python init_db.py
+flask db init         # Run only once to create the migrations folder
+flask db migrate -m "Initial migration"
+flask db upgrade      # Apply the migration to your database
+flask create-admin
 ```
 
 You will be prompted to enter:
@@ -177,7 +180,7 @@ python run.py
 
 #### 8. Admin Panel
 - **URL**: [http://localhost](http://localhost)  
-- **Access**: Use the credentials set during `init_db.py`.
+- **Access**: Use the credentials set during Migration.
 
 ---
 
