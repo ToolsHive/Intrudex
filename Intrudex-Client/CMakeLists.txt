@@ -26,8 +26,8 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/sysmon_manager.cpp
         src/SysmonCollector.cpp
-        header/HttpClient.h
         src/HttpClient.cpp
+        includes/pugixml.cpp
 )
 
 # Link Windows Event API
@@ -65,6 +65,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND WIN32)
             libstdc++-6
             libgcc_s_seh-1
             libwinpthread-1
+            libssp-0
     )
 
     foreach(DLL IN LISTS MINGW_DLLS)
@@ -74,6 +75,28 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND WIN32)
                 $<TARGET_FILE_DIR:${PROJECT_NAME}>
                 COMMENT "Copying ${DLL}.dll"
         )
+    endforeach()
+endif()
+
+# Copy any additional DLLs your project might need
+if(WIN32)
+    # Example for copying specific DLLs from known locations
+    set(EXTRA_WIN_DLLS
+            "C:/Windows/System32/msvcp140.dll"
+            "C:/Windows/System32/vcruntime140.dll"
+            "C:/Windows/System32/vcruntime140_1.dll"
+    )
+
+    foreach(DLL_PATH IN LISTS EXTRA_WIN_DLLS)
+        if(EXISTS "${DLL_PATH}")
+            get_filename_component(DLL_NAME "${DLL_PATH}" NAME)
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${DLL_PATH}"
+                    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+                    COMMENT "Copying ${DLL_NAME}"
+            )
+        endif()
     endforeach()
 endif()
 

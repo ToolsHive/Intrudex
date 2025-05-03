@@ -1,10 +1,15 @@
 #include <windows.h>
 #include <winhttp.h>
 #include <iostream>
+#include <utility>
 
 #include "../header/HttpClient.h"
 
-HttpClient::HttpClient(const std::string& serverUrl) : serverUrl(serverUrl) {}
+HttpClient::HttpClient(std::string serverUrl, std::string userAgent, std::string contentType, bool useHttps)
+    : serverUrl(std::move(serverUrl)),
+      wuserAgent(std::wstring(userAgent.begin(), userAgent.end())),
+      wcontentType(std::wstring(contentType.begin(), contentType.end())),
+      forceHttps(useHttps) {}
 
 bool HttpClient::sendLog(const std::string& eventData) const {
     int wcharsNum = MultiByteToWideChar(CP_UTF8, 0, serverUrl.c_str(), -1, nullptr, 0);
@@ -26,23 +31,26 @@ bool HttpClient::sendLog(const std::string& eventData) const {
         return false;
     }
 
-    HINTERNET sessionHandle = WinHttpOpen(L"Intrudex Client/1.0", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, nullptr, nullptr, 0);
+    const HINTERNET sessionHandle = WinHttpOpen(wuserAgent.c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, nullptr, nullptr, 0);
     if (!sessionHandle) {
         std::cerr << "[HttpClient] Failed to open HTTP session." << std::endl;
         return false;
     }
 
-    HINTERNET connectionHandle = WinHttpConnect(sessionHandle, urlComponents.lpszHostName, urlComponents.nPort, 0);
+    const HINTERNET connectionHandle = WinHttpConnect(sessionHandle, urlComponents.lpszHostName, urlComponents.nPort, 0);
     if (!connectionHandle) {
         std::cerr << "[HttpClient] Failed to connect to server." << std::endl;
         WinHttpCloseHandle(sessionHandle);
         return false;
     }
 
-    HINTERNET requestHandle = WinHttpOpenRequest(connectionHandle, L"POST", urlComponents.lpszUrlPath,
-                                                 nullptr, WINHTTP_NO_REFERER,
-                                                 WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                                 (urlComponents.nScheme == INTERNET_SCHEME_HTTPS) ? WINHTTP_FLAG_SECURE : 0);
+    const DWORD flags = (forceHttps || urlComponents.nScheme == INTERNET_SCHEME_HTTPS) ? WINHTTP_FLAG_SECURE : 0;
+
+    const HINTERNET requestHandle = WinHttpOpenRequest(
+        connectionHandle, L"POST", urlComponents.lpszUrlPath,
+        nullptr, WINHTTP_NO_REFERER,
+        WINHTTP_DEFAULT_ACCEPT_TYPES, flags
+    );
 
     if (!requestHandle) {
         std::cerr << "[HttpClient] Failed to open HTTP request." << std::endl;
@@ -51,9 +59,9 @@ bool HttpClient::sendLog(const std::string& eventData) const {
         return false;
     }
 
-    const std::wstring headers = L"Content-Type: application/json\r\n";
+    const std::wstring headers = L"Content-Type: " + wcontentType + L"\r\n";
 
-    int bodyLen = MultiByteToWideChar(CP_UTF8, 0, eventData.c_str(), -1, nullptr, 0);
+    const int bodyLen = MultiByteToWideChar(CP_UTF8, 0, eventData.c_str(), -1, nullptr, 0);
     std::wstring wbody(bodyLen, 0);
     MultiByteToWideChar(CP_UTF8, 0, eventData.c_str(), -1, &wbody[0], bodyLen);
 

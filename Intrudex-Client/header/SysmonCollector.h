@@ -11,9 +11,16 @@ public:
     bool start();
 
 private:
-    HttpClient* httpClient;
     std::string serverUrl;
+    std::wstring eventLogSource;
+    std::wstring eventFilter;
+    int sleepIntervalMs;
+    std::string logLevel;
+    bool sendEvents;
+
+    HttpClient* httpClient;
 
     void loadConfiguration();
+
     void handleEvent(const std::string& eventXml) const;
 };

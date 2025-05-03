@@ -2,14 +2,23 @@
 #include <Windows.h>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include "../includes/json.hpp"
 
 #include "../header/sysmon_manager.h"
 #include "../header/SysmonCollector.h"
 
+using json = nlohmann::json;
 
-bool isSysmonInstalled() {
-    const std::string command = "cd /d C:\\Windows\\System32 && Sysmon64.exe -h > nul 2>&1";
-    return system(command.c_str()) == 0;
+json loadClientConfig(const std::string& configPath) {
+    std::ifstream file(configPath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open client_config.json");
+    }
+
+    json config;
+    file >> config;
+    return config;
 }
 
 std::string getExecutableDirectory() {
@@ -22,11 +31,20 @@ std::string getExecutableDirectory() {
     return exePath.substr(0, pos);
 }
 
+bool isSysmonInstalled() {
+    const std::string command = "cd /d C:\\Windows\\System32 && Sysmon64.exe -h > nul 2>&1";
+    return system(command.c_str()) == 0;
+}
+
 int main() {
+    std::cout << "\n==================== Starting Intrudex Client ====================\n" << std::endl;
     try {
         const std::string exeDir = getExecutableDirectory();
-        const std::string sysmonPath = exeDir + "\\assets\\Sysmon64.exe";
-        const std::string configPath = exeDir + "\\config\\sysmonconfig-export.xml";
+        const std::string configFilePath = exeDir + "\\config\\client_config.json";
+        json config = loadClientConfig(configFilePath);
+
+        const std::string sysmonPath = exeDir + "\\" + config["sysmon_exe_path"].get<std::string>();
+        const std::string configPath = exeDir + "\\" + config["sysmon_config_path"].get<std::string>();
 
         if (isSysmonInstalled()) {
             std::cout << "[Main] Sysmon is already installed." << std::endl;
@@ -49,6 +67,7 @@ int main() {
             std::wcerr << L"[Main] Failed to start SysmonCollector." << std::endl;
             return 1;
         }
+
     } catch (const std::exception& ex) {
         std::cerr << "[Main] Exception: " << ex.what() << std::endl;
         return 1;
