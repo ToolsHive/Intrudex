@@ -1,10 +1,25 @@
 cmake_minimum_required(VERSION 3.30)
-project(Intrudex_Client VERSION 1.0.0 LANGUAGES CXX)
+project(Intrudex_Client
+        VERSION 1.0.0
+        DESCRIPTION "Intrudex: A SIGMA-based Intrusion Detection and Prevension System"
+        LANGUAGES CXX
+)
+
+# Define author information as a custom variable
+set(PROJECT_AUTHOR "Armoghan-ul-Mohmin")
+set(PROJECT_HOMEPAGE_URL  "https://github.com/ToolsHive/Intrudex")
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Print project information
+message(STATUS "Author: ${PROJECT_AUTHOR}")
+message(STATUS "Building Project: ${PROJECT_NAME}")
+message(STATUS "Version: ${PROJECT_VERSION}")
+message(STATUS "Description: ${PROJECT_DESCRIPTION}")
+message(STATUS "Homepage URL: ${PROJECT_HOMEPAGE_URL}")
 
 # Windows-only enforcement
 if(NOT WIN32)
@@ -114,3 +129,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config"
         COMMENT "Copying config to build folder"
 )
+
+# Add the resource file to the executable
+if(WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
+endif()
