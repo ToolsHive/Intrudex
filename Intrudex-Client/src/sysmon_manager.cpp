@@ -10,8 +10,7 @@ bool SysmonManager::install(const std::string& sysmonPath, const std::string& co
     if (const int result = system(installCommand.c_str()); result == 0) {
         std::cout << "[SysmonManager] Sysmon installed successfully." << std::endl;
         return true;
-    } else {
-        std::cerr << "[SysmonManager] Failed to install Sysmon." << std::endl;
-        return false;
     }
+    std::cerr << "[SysmonManager] Failed to install Sysmon." << std::endl;
+    return false;
 }

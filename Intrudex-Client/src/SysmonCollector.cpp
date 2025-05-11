@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <winevt.h>
 #include <sstream>
+#include <locale>
+#include <codecvt>
 
 #include "../header/SysmonCollector.h"
 #include "../includes/pugixml.hpp"
@@ -17,6 +19,11 @@ SysmonCollector::SysmonCollector() {
 
 SysmonCollector::~SysmonCollector() {
     delete httpClient;
+}
+
+std::wstring utf8_to_wstring(const std::string& str) {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    return converter.from_bytes(str);
 }
 
 void SysmonCollector::loadConfiguration() {
@@ -37,10 +44,8 @@ void SysmonCollector::loadConfiguration() {
         configFile >> config;
 
         serverUrl = config.value("server_url", "http://localhost/api/logs/upload");
-        eventLogSource = std::wstring(config.value("event_log_source", "Microsoft-Windows-Sysmon/Operational").begin(),
-                                      config.value("event_log_source", "Microsoft-Windows-Sysmon/Operational").end());
-        eventFilter = std::wstring(config.value("event_filter", "*[System[(Level=4 or Level=0)]]").begin(),
-                                   config.value("event_filter", "*[System[(Level=4 or Level=0)]]").end());
+        eventLogSource = utf8_to_wstring(config.value("event_log_source", "Microsoft-Windows-Sysmon/Operational"));
+        eventFilter = utf8_to_wstring(config.value("event_filter", "*[System[(Level=4 or Level=0)]]"));
         sleepIntervalMs = config.value("sleep_interval_ms", 1000);
         logLevel = config.value("log_level", "info");
         sendEvents = config.value("send_events", true);
@@ -91,7 +96,7 @@ bool SysmonCollector::start() {
     );
 
     if (!subscriptionHandle) {
-        std::cerr << "[SysmonCollector] Failed to subscribe to events." << std::endl;
+        std::cerr << "[SysmonCollector] Failed to subscribe to events. Error: " << GetLastError() << std::endl;
         return false;
     }
 

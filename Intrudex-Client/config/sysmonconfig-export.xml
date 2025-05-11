@@ -16,11 +16,12 @@ customization by the community
         <!--SYSMON EVENT ID 1 : PROCESS CREATION-->
         <!--DATA: UtcTime, ProcessGuid, ProcessID, Image, FileVersion, Description, Product, Company,CommandLine, CurrentDirectory, User, LogonGuid, LogonId, IntegrityLevel, Hashes, ParentProcessGuid, ParentProcessId, ParentImage, ParentCommandLine, RuleName-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Process Creation Noise" groupRelation="or">
             <ProcessCreate onmatch="exclude">
                 <!--SECTION: Microsoft Windows-->
 
-                <CommandLine condition="begin with">Intrudex_Client.exe</CommandLine>
+                <CommandLine condition="is">Intrudex_Client.exe</CommandLine>
+                <CommandLine condition="is">Intrudex_Server.py</CommandLine>
                 <CommandLine condition="begin with"> "C:\Windows\system32\wermgr.exe" "-queuereporting_svc" </CommandLine> <!--Windows:Windows error reporting/telemetry-->
                 <CommandLine condition="begin with">C:\Windows\system32\DllHost.exe /Processid</CommandLine> <!--Windows-->
                 <CommandLine condition="begin with">C:\Windows\system32\wbem\wmiprvse.exe -Embedding</CommandLine> <!--Windows: WMI provider host-->
@@ -159,8 +160,8 @@ customization by the community
                 <ParentImage condition="is">C:\Windows\Microsoft.NET\Framework\v4.0.30319\ngentask.exe</ParentImage> <!--Microsoft:DotNet: Spawns thousands of ngen.exe processes-->
 
                 <!--SECTION: Microsoft:Office-->
-                <Image condition="is">C:\Program Files\Microsoft Office\Office16\MSOSYNC.EXE</Image> <!--Microsoft:Office: Background process for SharePoint/Office365 connectivity-->
-                <Image condition="is">C:\Program Files (x86)\Microsoft Office\Office16\MSOSYNC.EXE</Image> <!--Microsoft:Office: Background process for SharePoint/Office365 connectivity-->
+                <Image condition="is">C:\Program Files\Microsoft Office\Office16\MSOSYNC.EXE</Image> <!--Microsoft:Office: Background process for SharePoint/Office 365 connectivity-->
+                <Image condition="is">C:\Program Files (x86)\Microsoft Office\Office16\MSOSYNC.EXE</Image> <!--Microsoft:Office: Background process for SharePoint/Office 365 connectivity-->
                 <Image condition="is">C:\Program Files\Common Files\MicrosoftShared\OfficeSoftwareProtectionPlatform\OSPPSVC.EXE</Image> <!--Microsoft:Office: Licensing service-->
                 <Image condition="is">C:\Program Files\Microsoft Office\Office16\msoia.exe</Image> <!--Microsoft:Office: Telemetry collector-->
                 <Image condition="is">C:\Program Files (x86)\MicrosoftOffice\root\Office16\officebackgroundtaskhandler.exe</Image>
@@ -182,7 +183,7 @@ customization by the community
         <!--SYSMON EVENT ID 2 : FILE CREATION TIME RETROACTIVELY CHANGED IN THE FILESYSTEM [FileCreateTime]-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, TargetFilename, CreationUtcTime, PreviousCreationUtcTime-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include File Creation Time Changes" groupRelation="or">
             <FileCreateTime onmatch="include">
                 <Image name="T1099" condition="begin with">C:\Users</Image> <!--Look for timestomping in user area, usually nothing should be doing that here-->
                 <TargetFilename name="T1099" condition="end with">.exe</TargetFilename> <!--Look for backdated executables anywhere-->
@@ -190,7 +191,7 @@ customization by the community
             </FileCreateTime>
         </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude File Creation Time Noise" groupRelation="or">
             <FileCreateTime onmatch="exclude">
                 <Image condition="image">OneDrive.exe</Image> <!--OneDrive constantly changes file times-->
                 <Image condition="image">C:\Windows\system32\backgroundTaskHost.exe</Image>
@@ -207,7 +208,7 @@ customization by the community
         <!--SYSMON EVENT ID 3 : NETWORK CONNECTION INITIATED [NetworkConnect]-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, User, Protocol, Initiated, SourceIsIpv6, SourceIp, SourceHostname, SourcePort, SourcePortName, DestinationIsIpV6, DestinationIp,DestinationHostname, DestinationPort, DestinationPortName-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Network Connections" groupRelation="or">
             <NetworkConnect onmatch="include">
                 <!--Suspicious
                 sources for network-connecting binaries-->
@@ -310,7 +311,7 @@ customization by the community
             </NetworkConnect>
         </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Network Connection Noise" groupRelation="or">
             <NetworkConnect onmatch="exclude">
                 <!--SECTION: Microsoft-->
                 <Image condition="begin with">C:\ProgramData\Microsoft\Windows Defender\Platform\</Image>
@@ -336,14 +337,14 @@ customization by the community
         <!--SYSMON EVENT ID 5 : PROCESS ENDED [ProcessTerminate]-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Process Termination Events" groupRelation="or">
             <ProcessTerminate onmatch="include">
                 <Image condition="begin with">C:\Users</Image> <!--Process terminations by user binaries-->
                 <Image condition="begin with">\</Image> <!--Devices and VSC shouldn't be executing changes  -->
             </ProcessTerminate>
         </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Process Termination Noise" groupRelation="or">
             <ProcessTerminate onmatch="exclude">
             </ProcessTerminate>
         </RuleGroup>
@@ -351,7 +352,7 @@ customization by the community
         <!--SYSMON EVENT ID 6 : DRIVER LOADED INTO KERNEL [DriverLoad]-->
         <!--DATA: UtcTime, ImageLoaded, Hashes, Signed, Signature, SignatureStatus-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Driver Load Noise" groupRelation="or">
             <DriverLoad onmatch="exclude">
                 <Signature condition="contains">microsoft</Signature> <!--Exclude signed Microsoft drivers-->
                 <Signature condition="contains">windows</Signature> <!--Exclude signed Microsoft drivers-->
@@ -362,7 +363,7 @@ customization by the community
         <!--SYSMON EVENT ID 7 : DLL (IMAGE) LOADED BY PROCESS [ImageLoad]-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, ImageLoaded, Hashes, Signed, Signature, SignatureStatus-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include DLL Image Loads" groupRelation="or">
             <ImageLoad onmatch="include">
                 <!--NOTE: Using "include" with no rules means nothing in this section will be logged-->
             </ImageLoad>
@@ -371,7 +372,7 @@ customization by the community
         <!--SYSMON EVENT ID 8 : REMOTE THREAD CREATED [CreateRemoteThread]-->
         <!--DATA: UtcTime, SourceProcessGuid, SourceProcessId, SourceImage, TargetProcessId, TargetImage, NewThreadId, StartAddress, StartModule, StartFunction-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Remote Thread Creation Noise" groupRelation="or">
             <CreateRemoteThread onmatch="exclude">
                 <!--COMMENT: Exclude mostly-safe sources and log anything else.-->
                 <SourceImage condition="is">C:\Windows\system32\wbem\WmiPrvSE.exe</SourceImage>
@@ -390,7 +391,7 @@ customization by the community
         <!--EVENT 9: "RawAccessRead detected"-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, Device-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Raw Disk Access" groupRelation="or">
             <RawAccessRead onmatch="include">
                 <!--NOTE: Using "include" with no rules means nothing in this section will be logged-->
             </RawAccessRead>
@@ -400,7 +401,7 @@ customization by the community
         <!--EVENT 10: "Process accessed"-->
         <!--DATA: UtcTime, SourceProcessGuid, SourceProcessId, SourceThreadId, SourceImage, TargetProcessGuid, TargetProcessId, TargetImage, GrantedAccess, CallTrace-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Process Access Events" groupRelation="or">
             <ProcessAccess onmatch="include">
                 <!--NOTE: Using "include" with no rules means nothing in this section will be logged-->
             </ProcessAccess>
@@ -410,7 +411,7 @@ customization by the community
         <!--EVENT 11: "File created"-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, TargetFilename, CreationUtcTime-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include File Creation Events" groupRelation="or">
             <FileCreate onmatch="include">
                 <TargetFilename name="T1023" condition="contains">\Start Menu</TargetFilename> <!--Windows: Startup links and shortcut modification -->
                 <TargetFilename name="T1165" condition="contains">\Startup\</TargetFilename> <!--Microsoft:Changes to user's auto-launched files and shortcuts-->
@@ -473,7 +474,7 @@ customization by the community
             </FileCreate>
         </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude File Creation Noise" groupRelation="or">
             <FileCreate onmatch="exclude">
                 <!--SECTION: Microsoft-->
                 <Image condition="is">C:\Program Files (x86)\EMET 5.5\EMET_Service.exe</Image> <!--Microsoft:EMET: Writes to C:\Windows\AppPatch\-->
@@ -502,7 +503,7 @@ customization by the community
         <!--EVENT 14: "Registry objected renamed"-->
         <!--DATA: EventType, UtcTime, ProcessGuid, ProcessId, Image, TargetObject, Details (can't filter on), NewName (can't filter on)-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Registry Events" groupRelation="or">
             <RegistryEvent onmatch="include">
                 <!--Autorun or Startups-->
                 <TargetObject name="T1060,RunKey" condition="contains">CurrentVersion\Run</TargetObject> <!--Windows: Wildcard for Run keys, including RunOnce, RunOnceEx, RunServices, RunServicesOnce [Also covers terminal server] -->
@@ -550,7 +551,7 @@ customization by the community
                 <TargetObject name="T1158" condition="end with">\ShowSuperHidden</TargetObject> <!--Windows:Explorer: Some types of malware try to hide their hidden system files from the user, good signal event -->
                 <TargetObject name="T1158" condition="end with">\HideFileExt</TargetObject> <!--Windows:Explorer: Some malware hides file extensions to make diagnosis/disinfection more daunting to novice users -->
 
-                <!--Windows shell hijack and modifications-->
+                <!--Windows Shell hijack and modifications-->
                 <TargetObject condition="contains">Classes\*\</TargetObject> <!--Windows:Explorer -->
                 <TargetObject condition="contains">Classes\AllFilesystemObjects\</TargetObject> <!--Windows:Explorer-->
                 <TargetObject condition="contains">Classes\Directory\</TargetObject> <!--Windows:Explorer-->
@@ -670,7 +671,7 @@ customization by the community
             </RegistryEvent>
         </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Registry Noise" groupRelation="or">
             <RegistryEvent onmatch="exclude">
 
                 <TargetObject condition="contains">\{CAFEEFAC-</TargetObject>
@@ -749,29 +750,32 @@ customization by the community
         <!--EVENT 15: "File stream created"-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, Image, TargetFilename, CreationUtcTime, Hash-->
 
-        <FileCreateStreamHash onmatch="include">
-            <TargetFilename condition="contains">Downloads</TargetFilename> <!--Downloaded files. Does not include "Run" files in IE-->
-            <TargetFilename condition="contains">Temp\7z</TargetFilename> <!--7zip extractions-->
-            <TargetFilename condition="contains">Startup</TargetFilename> <!--ADS startup -->
-            <TargetFilename condition="end with">.bat</TargetFilename> <!--Batch scripting-->
-            <TargetFilename condition="end with">.cmd</TargetFilename> <!--Batch scripting -->
-            <TargetFilename condition="end with">.doc</TargetFilename> <!--Office doc potentially with macro -->
-            <TargetFilename condition="end with">.hta</TargetFilename> <!--Scripting-->
-            <TargetFilename condition="end with">.jse</TargetFilename> <!--Registry File-->
-            <TargetFilename condition="end with">.lnk</TargetFilename> <!--Shortcut file -->
-            <TargetFilename condition="end with">.ppt</TargetFilename> <!--Office doc potentially with macros-->
-            <TargetFilename condition="end with">.ps1</TargetFilename> <!--PowerShell-->
-            <TargetFilename condition="end with">.ps2</TargetFilename> <!--PowerShell-->
-            <TargetFilename condition="end with">.reg</TargetFilename> <!--Registry File-->
-            <TargetFilename condition="end with">.sct</TargetFilename> <!--Scripting  -->
-            <TargetFilename condition="end with">.vb</TargetFilename> <!--VisualBasicScripting files-->
-            <TargetFilename condition="end with">.vbe</TargetFilename> <!--VisualBasicScripting files-->
-            <TargetFilename condition="end with">.vbs</TargetFilename> <!--VisualBasicScripting files-->
-            <TargetFilename condition="end with">.wsc</TargetFilename> <!--Scripting  -->
-            <TargetFilename condition="end with">.wsf</TargetFilename> <!--Scripting -->
-        </FileCreateStreamHash>
+        <RuleGroup name="Include Alternate Data Stream Creation" groupRelation="or">
+            <FileCreateStreamHash onmatch="include">
+                <TargetFilename condition="contains">Downloads</TargetFilename> <!--Downloaded files. Does not include "Run" files in IE-->
+                <TargetFilename condition="contains">Temp\7z</TargetFilename> <!--7zip extractions-->
+                <TargetFilename condition="contains">Startup</TargetFilename> <!--ADS startup -->
+                <TargetFilename condition="end with">.bat</TargetFilename> <!--Batch scripting-->
+                <TargetFilename condition="end with">.cmd</TargetFilename> <!--Batch scripting -->
+                <TargetFilename condition="end with">.doc</TargetFilename> <!--Office doc potentially with macro -->
+                <TargetFilename condition="end with">.hta</TargetFilename> <!--Scripting-->
+                <TargetFilename condition="end with">.jse</TargetFilename> <!--Registry File-->
+                <TargetFilename condition="end with">.lnk</TargetFilename> <!--Shortcut file -->
+                <TargetFilename condition="end with">.ppt</TargetFilename> <!--Office doc potentially with macros-->
+                <TargetFilename condition="end with">.ps1</TargetFilename> <!--PowerShell-->
+                <TargetFilename condition="end with">.ps2</TargetFilename> <!--PowerShell-->
+                <TargetFilename condition="end with">.reg</TargetFilename> <!--Registry File-->
+                <TargetFilename condition="end with">.sct</TargetFilename> <!--Scripting  -->
+                <TargetFilename condition="end with">.vb</TargetFilename> <!--VisualBasicScripting files-->
+                <TargetFilename condition="end with">.vbe</TargetFilename> <!--VisualBasicScripting files-->
+                <TargetFilename condition="end with">.vbs</TargetFilename> <!--VisualBasicScripting files-->
+                <TargetFilename condition="end with">.wsc</TargetFilename> <!--Scripting  -->
+                <TargetFilename condition="end with">.wsf</TargetFilename> <!--Scripting -->
+            </FileCreateStreamHash>
+        </RuleGroup>
 
-        <RuleGroup name="" groupRelation="or">
+
+        <RuleGroup name="Exclude Alternate Data Stream Noise" groupRelation="or">
             <FileCreateStreamHash onmatch="exclude">
             </FileCreateStreamHash>
         </RuleGroup>
@@ -780,7 +784,7 @@ customization by the community
         <!--EVENT 16: "Sysmon config state changed"-->
         <!--DATA: UtcTime, ProcessGuid, ProcessId, PipeName, Image-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Named Pipe Events" groupRelation="or">
             <PipeEvent onmatch="include">
 
                 <!-- Remote Command Execution Tools -->
@@ -808,7 +812,7 @@ customization by the community
         <!--EVENT 21: "WmiEventConsumerToFilter activity detected"-->
         <!--DATA: EventType, UtcTime, Operation, User, Name, Type, Destination, Consumer, Filter-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude WMI Events" groupRelation="or">
             <WmiEvent onmatch="exclude">
                 <!--NOTE: Using exclude with no rules means everything will be logged-->
             </WmiEvent>
@@ -818,7 +822,7 @@ customization by the community
         <!--EVENT 22: "Dns query"-->
         <!--DATA: RuleName, UtcTime, ProcessGuid, ProcessId, QueryName, QueryType, QueryStatus, QueryResults (can't filter on)-->
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude DNS Query Noise" groupRelation="or">
             <DnsQuery onmatch="exclude">
                 <!--Network noise-->
                 <QueryName condition="end with">.arpa.</QueryName> <!--Design decision to not log reverse DNS lookups. You will need to decide.-->
@@ -1054,7 +1058,7 @@ customization by the community
         <!--DATA: RuleName, UtcTime, ProcessGuid, ProcessId, User, Image, TargetFilename, Hashes, IsExecutable, Archived -->
 
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Include Clipboard Changes" groupRelation="or">
             <ClipboardChange onmatch="include">
             </ClipboardChange>
         </RuleGroup>
@@ -1065,22 +1069,27 @@ customization by the community
         <!--DATA: EventType, UtcTime, ProcessGuid, ProcessId, Image, Session, ClientInfo, Hashes, Archived -->
 
 
-        <RuleGroup name="" groupRelation="or">
-            <ClipboardChange onmatch="include">
+        <RuleGroup name="Include Process Creation Monitoring" groupRelation="or">
+            <ProcessCreate onmatch="include">
+                <Image condition="end with">powershell.exe</Image>
+                <Image condition="end with">pwsh.exe</Image>
+                <Image condition="end with">cmd.exe</Image>
                 <Image condition="end with">wscript.exe</Image>
                 <Image condition="end with">cscript.exe</Image>
-                <Image condition="end with">powershell.exe</Image>
+                <Image condition="end with">mimikatz.exe</Image>
+                <Image condition="end with">procdump.exe</Image>
                 <Image condition="end with">rdpclip.exe</Image>
-            </ClipboardChange>
+                <CommandLine condition="contains">-enc</CommandLine>
+                <CommandLine condition="contains">-nop</CommandLine>
+            </ProcessCreate>
         </RuleGroup>
-
 
         <!--SYSMON EVENT ID 25 : PROCESS TAMPERING [ProcessTampering]-->
         <!--EVENT 25: "Process Tampering"-->
         <!--DATA: EventType, RuleName, UtcTime, ProcessGuid, ProcessId, Image, Type -->
 
 
-        <RuleGroup name="" groupRelation="or">
+        <RuleGroup name="Exclude Process Tampering Noise" groupRelation="or">
             <ProcessTampering onmatch="exclude">
                 <Image condition="begin with">C:\Program Files (x86)\Microsoft\Edge\Application\</Image>
             </ProcessTampering>
