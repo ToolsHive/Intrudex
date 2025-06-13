@@ -28,6 +28,7 @@
 ## 📚 Table of Contents
 - [📚 Table of Contents](#-table-of-contents)
 - [🎯 Introduction](#-introduction)
+- [🖼️ Architecture Overview](#️-architecture-overview)
 - [⭐ Features](#-features)
 - [🛠️ Technologies Used](#️-technologies-used)
 - [🛡️ INTRUDEX Server](#️-intrudex-server)
@@ -50,6 +51,94 @@
 Intrudex is a **state-of-the-art, Sigma-based Intrusion Detection and Prevention System (IPS/IDS)**, specifically designed for **Windows environments**. It features a **hybrid architecture**, combining the efficiency of a **C++ Windows client** for real-time log monitoring with a **Python Flask-based server** for centralized management and a **web dashboard**.
 
 Intrudex leverages **Sigma rules** to detect threats in **Windows Event Logs**, providing **real-time security alerts** and **automatic threat response mechanisms**.
+
+---
+
+## 🖼️ Architecture Overview
+
+```mermaid
+flowchart TB
+    %% Client Layer
+    subgraph "Client Layer" 
+        direction TB
+        EL["Windows Event Logs"]:::infra
+        SM["SysmonManager"]:::client
+        SC["SysmonCollector"]:::client
+        SE["Sigma Rule Engine"]:::client
+        AL["Alert"]:::client
+        HC["HttpClient"]:::client
+        RE["Response Engine"]:::client
+        CFG["Client Config & Rules"]:::doc
+        EL -->|collects events| SC
+        SC -->|apply rules| SE
+        SE -->|generate| AL
+        AL -->|send alert| HC
+        HC -->|secure REST| API
+        SM -->|self-healing| WR
+        SM -->|self-healing| TS
+    end
+
+    %% External infra for client
+    WR["Windows Registry"]:::infra
+    TS["Task Scheduler"]:::infra
+
+    %% API Layer inside Docker
+    subgraph "Docker Container" 
+        direction TB
+        subgraph "REST API Layer"
+            direction TB
+            API["Flask REST API"]:::api
+            API -->|"POST /auth"| AuthAPI
+            API -->|"POST /logs"| LogsAPI
+            API -->|"GET /main"| MainAPI
+            API -->|"error handlers"| ErrorsAPI
+        end
+
+        %% Server Layer
+        subgraph "Server Layer"
+            direction TB
+            SI["App Init"]:::server
+            DBS["DB Setup & Migrations"]:::server
+            subgraph "Models"
+                AUTHM["User Model"]:::server
+                LOGM["Log Model"]:::server
+            end
+            subgraph "Routes"
+                AuthAPI["/auth endpoints"]:::server
+                LogsAPI["/logs endpoints"]:::server
+                MainAPI["/main/dashboard"]:::server
+                ErrorsAPI["Error Handlers"]:::server
+            end
+            subgraph "Views & Assets"
+                TPL["Jinja2 Templates"]:::view
+                STA["Static Assets (TailwindCSS)"]:::view
+            end
+            CLI["Admin CLI"]:::server
+            SI -->|loads config| DBS
+            DBS -->|uses models| AUTHM
+            DBS -->|uses models| LOGM
+            AuthAPI -->|CRUD| AUTHM
+            LogsAPI -->|CRUD| LOGM
+            MainAPI -->|render| TPL
+            TPL -->|styles| STA
+            CLI -->|migrations| DBS
+        end
+
+        %% Database
+        DB["SQLAlchemy DB"]:::db
+        DBS -->|connect| DB
+        API -->|DB ops| DB
+    end
+
+    %% Styles
+    classDef client fill:#AEDFF7,stroke:#0366D6,color:#000
+    classDef server fill:#FFDDAA,stroke:#D2691E,color:#000
+    classDef infra fill:#E2E2E2,stroke:#999,color:#000
+    classDef api fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef db fill:#F3E5F5,stroke:#7B1FA2,color:#000
+    classDef view fill:#FFF9C4,stroke:#FBC02D,color:#000
+    classDef doc fill:#D7CCC8,stroke:#5D4037,color:#000
+```
 
 ---
 
@@ -82,6 +171,7 @@ Intrudex leverages **Sigma rules** to detect threats in **Windows Event Logs**, 
 ---
 
 ## 🛡️ INTRUDEX Server
+
 The **INTRUDEX Server** is the server-side component of the Intrusion Detection and Prevention System. It provides a Flask-based REST API and centralized dashboard for monitoring threats, managing Sigma rules, and logging events from Windows clients.
 
 ---
@@ -120,7 +210,7 @@ pip install -r requirements.txt
 #### 4. Environment Configuration
 Create a `.env` file in the root of the project:
 
-```
+``` .env
 FLASK_RUN_PORT=80
 FLASK_RUN_HOST=127.0.0.1
 FLASK_DEBUG=1
@@ -131,7 +221,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS=False
 
 To switch to PostgreSQL, update the `DATABASE_URL`:
 
-```
+``` .env
 DATABASE_URL=postgresql://username:password@localhost/intrudex
 ```
 
@@ -193,3 +283,6 @@ We follow the [Contributor Covenant](https://contributor-covenant.org).
 Intrudex is released under the [MIT LICENSE](LICENSE).
 
 ---
+
+**Intrudex** – Defend. Detect. Respond.  
+*Empowering your Windows security with real-time intelligence.*
