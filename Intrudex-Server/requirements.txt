@@ -9,7 +9,7 @@ click==8.1.8
 clr_loader==0.2.7.post0
 colorama==0.4.6
 dotenv==0.9.9
-Flask==3.1.0
+Flask==3.1.1
 Flask-Migrate==4.1.0
 Flask-SQLAlchemy==3.1.1
 greenlet==3.1.1
