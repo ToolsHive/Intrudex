@@ -31,7 +31,7 @@ pywebview==5.4
 pywin32-ctypes==0.2.3
 requests==2.32.3
 screeninfo==0.8.1
-setuptools==78.1.0
+setuptools==78.1.1
 SQLAlchemy==2.0.40
 typing_extensions==4.13.2
 urllib3==2.4.0
