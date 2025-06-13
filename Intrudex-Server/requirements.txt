@@ -29,7 +29,7 @@ python-dotenv==1.1.0
 pythonnet==3.0.5
 pywebview==5.4
 pywin32-ctypes==0.2.3
-requests==2.32.3
+requests==2.32.4
 screeninfo==0.8.1
 setuptools==78.1.1
 SQLAlchemy==2.0.40
