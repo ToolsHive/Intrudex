@@ -10,7 +10,7 @@ public:
                         std::string contentType = "application/json",
                         bool useHttps = false);
 
-    bool sendLog(const std::string& eventData) const;
+    [[nodiscard]] bool sendLog(const std::string& eventData) const;
 
 private:
     std::string serverUrl;

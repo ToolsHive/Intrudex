@@ -67,8 +67,8 @@ bool HttpClient::sendLog(const std::string& eventData) const {
 
     BOOL result = WinHttpSendRequest(requestHandle,
                                      headers.c_str(), static_cast<DWORD>(-1),
-                                     (LPVOID)wbody.c_str(), static_cast<DWORD>(wbody.length() * sizeof(wchar_t)),
-                                     static_cast<DWORD>(wbody.length() * sizeof(wchar_t)),
+                                     (LPVOID)wbody.c_str(), wbody.length() * sizeof(wchar_t),
+                                     wbody.length() * sizeof(wchar_t),
                                      0);
 
     if (!result) {
