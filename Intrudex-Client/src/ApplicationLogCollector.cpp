@@ -2,34 +2,32 @@
 #include <iostream>
 #include <windows.h>
 #include <winevt.h>
-#include <locale>
-#include <codecvt>
 
-#include "../header/SysmonCollector.h"
-#include "../header/utils.h"
+#include "../header/ApplicationLogCollector.h"
+#include "../header/ApplicationHttpSender.h"
 #include "../includes/json.hpp"
+#include "../header/utils.h"
 
 using json = nlohmann::json;
 
-SysmonCollector::SysmonCollector() {
+ApplicationLogCollector::ApplicationLogCollector() {
     loadConfiguration();
-    httpClient = new HttpClient(serverUrl);
+    httpSender = new ApplicationHttpSender(apiUrl);
 }
 
-SysmonCollector::~SysmonCollector() {
-    delete httpClient;
+ApplicationLogCollector::~ApplicationLogCollector() {
+    delete httpSender;
 }
 
-void SysmonCollector::loadConfiguration() {
+void ApplicationLogCollector::loadConfiguration() {
     std::ifstream configFile("config/client_config.json");
     if (!configFile.is_open()) {
-        std::cerr << "[SysmonCollector] Failed to open configuration file. Using default values.\n";
-        serverUrl = "http://localhost/api/logs/sysmon";
-        eventLogSource = L"Microsoft-Windows-Sysmon/Operational";
+        std::cerr << "[ApplicationLogCollector] Failed to open configuration file. Using default values.\n";
+        apiUrl = "http://localhost/api/logs/application";
+        eventLogSource = L"Application";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
-        sleepIntervalMs = 1000;
+        sleepIntervalMs = 5000;
         logLevel = "info";
-        sendEvents = true;
         return;
     }
 
@@ -37,27 +35,25 @@ void SysmonCollector::loadConfiguration() {
         json config;
         configFile >> config;
 
-        serverUrl = config.value("sysmon_url", "http://localhost/api/logs/sysmon");
-        eventLogSource = utf8_to_wstring(config.value("event_log_source", "Microsoft-Windows-Sysmon/Operational"));
+        apiUrl = config.value("application_url", "http://localhost/api/logs/application");
+        eventLogSource = utf8_to_wstring(config.value("event_log_source", "Application"));
         eventFilter = utf8_to_wstring(config.value("event_filter", "*[System[(Level=4 or Level=0)]]"));
-        sleepIntervalMs = config.value("sleep_interval_ms", 1000);
+        sleepIntervalMs = config.value("sleep_interval_ms", 5000);
         logLevel = config.value("log_level", "info");
-        sendEvents = config.value("send_events", true);
 
-        std::cout << "[SysmonCollector] Configuration loaded successfully.\n";
+        std::cout << "[ApplicationLogCollector] Configuration loaded successfully.\n";
     } catch (const std::exception& e) {
-        std::cerr << "[SysmonCollector] Error parsing config: " << e.what() << ". Using default values.\n";
-        serverUrl = "http://localhost/api/logs/sysmon";
-        eventLogSource = L"Microsoft-Windows-Sysmon/Operational";
+        std::cerr << "[ApplicationLogCollector] Error parsing config: " << e.what() << ". Using default values.\n";
+        apiUrl = "http://localhost/api/logs/application";
+        eventLogSource = L"Application";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
-        sleepIntervalMs = 1000;
+        sleepIntervalMs = 5000;
         logLevel = "info";
-        sendEvents = true;
     }
 }
 
-bool SysmonCollector::start() {
-    std::wcout << L"[SysmonCollector] Starting event collection from: " << eventLogSource << std::endl;
+bool ApplicationLogCollector::start() {
+    std::wcout << L"[ApplicationLogCollector] Starting event collection from: " << eventLogSource << std::endl;
 
     EVT_HANDLE subscriptionHandle = EvtSubscribe(
         nullptr,
@@ -78,7 +74,7 @@ bool SysmonCollector::start() {
                     std::wstring eventXml(bufferSize / sizeof(wchar_t), L'\0');
 
                     if (EvtRender(nullptr, eventHandle, EvtRenderEventXml, bufferSize, &eventXml[0], &bufferUsed, &propertyCount)) {
-                        auto* collector = static_cast<SysmonCollector*>(context);
+                        auto* collector = static_cast<ApplicationLogCollector*>(context);
                         std::string eventString(eventXml.begin(), eventXml.end());
                         collector->handleEvent(eventString);
                     }
@@ -90,7 +86,7 @@ bool SysmonCollector::start() {
     );
 
     if (!subscriptionHandle) {
-        std::cerr << "[SysmonCollector] Failed to subscribe to events. Error: " << GetLastError() << std::endl;
+        std::cerr << "[ApplicationLogCollector] Failed to subscribe to events. Error: " << GetLastError() << std::endl;
         return false;
     }
 
@@ -102,16 +98,16 @@ bool SysmonCollector::start() {
     return true;
 }
 
-void SysmonCollector::handleEvent(const std::string& eventXml) const {
+void ApplicationLogCollector::handleEvent(const std::string& eventXml) const {
     if (logLevel == "debug") {
-        std::cout << "\n==================== [ Sysmon Log Start ] ====================\n";
+        std::cout << "\n==================== [ Application Log Start ] ====================\n";
         std::cout << prettyPrintXml(eventXml) << std::endl;
-        std::cout << "==================== [ Sysmon Log End ] ======================\n";
+        std::cout << "==================== [ Application Log End ] ======================\n";
     }
 
-    if (sendEvents && httpClient->sendLog(eventXml)) {
-        std::cout << "[SysmonCollector] Event sent successfully.\n";
-    } else if (sendEvents) {
-        std::cout << "[SysmonCollector] Failed to send event.\n";
+    if (httpSender->sendLog(eventXml)) {
+        std::cout << "[ApplicationLogCollector] Event sent successfully.\n";
+    } else {
+        std::cerr << "[ApplicationLogCollector] Failed to send event.\n";
     }
 }

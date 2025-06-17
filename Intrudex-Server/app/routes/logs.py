@@ -4,81 +4,100 @@ from datetime import datetime
 from app.db import db
 import re
 
-from app.models.logs import SysmonLog
+from app.models.logs import SysmonLog, ApplicationLog
 
 logs_bp = Blueprint('logs', __name__, url_prefix='/api/logs')
+
+def sanitize_xml_data(raw_data):
+    """Remove invalid XML characters from raw data."""
+    return re.sub(r'[^\x09\x0A\x0D\x20-\x7F]', '', raw_data)
+
+def parse_xml_event_data(xml_data, field_map, namespace):
+    """Extract fields from XML using a field mapping."""
+    root = ET.fromstring(xml_data)
+    data = {}
+    for key, (xpath, is_attr, default, cast) in field_map.items():
+        if is_attr:
+            elem = root.find(xpath, namespaces=namespace)
+            value = elem.attrib.get(is_attr) if elem is not None and is_attr in elem.attrib else default
+        else:
+            value = root.findtext(xpath, namespaces=namespace) or default
+        if cast and value not in (None, '', 'Unknown'):
+            try:
+                value = cast(value)
+            except Exception:
+                value = default
+        data[key] = value
+    return data
 
 @logs_bp.route('/sysmon', methods=['POST'], strict_slashes=False)
 def sysmon_logs():
     try:
-        # Get raw XML data from the request, handling invalid UTF-8 bytes
         raw_data = request.data.decode('utf-8', errors='replace')
         print("[API] Raw XML Data (Before Sanitization):", raw_data)
-
-        # Sanitize the raw XML data to remove invalid characters
-        sanitized_data = re.sub(r'[^\x09\x0A\x0D\x20-\x7F]', '', raw_data)
+        sanitized_data = sanitize_xml_data(raw_data)
         print("[API] Raw XML Data (After Sanitization):", sanitized_data)
-
-        # Parse the sanitized XML data with namespace handling
-        root = ET.fromstring(sanitized_data)
         namespace = {'ns': 'http://schemas.microsoft.com/win/2004/08/events/event'}
-
-        # Extract relevant fields from the XML
-        event_data = {
-            "event_id": int(root.findtext(".//ns:EventID", namespaces=namespace) or 0),
-            "time_created": datetime.fromisoformat(
-                root.find(".//ns:TimeCreated", namespaces=namespace).attrib.get("SystemTime").replace('Z', '+00:00')
-            ),
-            "computer": root.findtext(".//ns:Computer", namespaces=namespace) or "Unknown",
-            "process_guid": root.findtext(".//ns:Data[@Name='ProcessGuid']", namespaces=namespace) or "Unknown",
-            "process_id": int(root.findtext(".//ns:Data[@Name='ProcessId']", namespaces=namespace) or 0),
-            "image": root.findtext(".//ns:Data[@Name='Image']", namespaces=namespace) or "Unknown",
-            "image_loaded": root.findtext(".//ns:Data[@Name='ImageLoaded']", namespaces=namespace) or "Unknown",
-            "file_version": root.findtext(".//ns:Data[@Name='FileVersion']", namespaces=namespace) or "Unknown",
-            "description": root.findtext(".//ns:Data[@Name='Description']", namespaces=namespace) or "Unknown",
-            "product": root.findtext(".//ns:Data[@Name='Product']", namespaces=namespace) or "Unknown",
-            "company": root.findtext(".//ns:Data[@Name='Company']", namespaces=namespace) or "Unknown",
-            "original_file_name": root.findtext(".//ns:Data[@Name='OriginalFileName']",
-                                                namespaces=namespace) or "Unknown",
-            "hashes": root.findtext(".//ns:Data[@Name='Hashes']", namespaces=namespace) or "Unknown",
-            "signed": root.findtext(".//ns:Data[@Name='Signed']", namespaces=namespace) == 'true',
-            "signature": root.findtext(".//ns:Data[@Name='Signature']", namespaces=namespace) or "Unknown",
-            "signature_status": root.findtext(".//ns:Data[@Name='SignatureStatus']", namespaces=namespace) or "Unknown",
-            "user": root.findtext(".//ns:Data[@Name='User']", namespaces=namespace) or "Unknown",
-            "rule_name": root.findtext(".//ns:Data[@Name='RuleName']", namespaces=namespace) or "Unknown",
+        field_map = {
+            "event_id": (".//ns:EventID", False, 0, int),
+            "time_created": (".//ns:TimeCreated", "SystemTime", None, lambda v: datetime.fromisoformat(v.replace('Z', '+00:00'))),
+            "computer": (".//ns:Computer", False, "Unknown", None),
+            "process_guid": (".//ns:Data[@Name='ProcessGuid']", False, "Unknown", None),
+            "process_id": (".//ns:Data[@Name='ProcessId']", False, 0, int),
+            "image": (".//ns:Data[@Name='Image']", False, "Unknown", None),
+            "image_loaded": (".//ns:Data[@Name='ImageLoaded']", False, "Unknown", None),
+            "file_version": (".//ns:Data[@Name='FileVersion']", False, "Unknown", None),
+            "description": (".//ns:Data[@Name='Description']", False, "Unknown", None),
+            "product": (".//ns:Data[@Name='Product']", False, "Unknown", None),
+            "company": (".//ns:Data[@Name='Company']", False, "Unknown", None),
+            "original_file_name": (".//ns:Data[@Name='OriginalFileName']", False, "Unknown", None),
+            "hashes": (".//ns:Data[@Name='Hashes']", False, "Unknown", None),
+            "signed": (".//ns:Data[@Name='Signed']", False, False, lambda v: v == 'true'),
+            "signature": (".//ns:Data[@Name='Signature']", False, "Unknown", None),
+            "signature_status": (".//ns:Data[@Name='SignatureStatus']", False, "Unknown", None),
+            "user": (".//ns:Data[@Name='User']", False, "Unknown", None),
+            "rule_name": (".//ns:Data[@Name='RuleName']", False, "Unknown", None),
         }
-
+        event_data = parse_xml_event_data(sanitized_data, field_map, namespace)
         print("[API] Extracted Event Data:", event_data)
-
-        # Create a SysmonLog object
-        log = SysmonLog(
-            event_id=event_data["event_id"],
-            time_created=event_data["time_created"],
-            computer=event_data["computer"],
-            process_guid=event_data["process_guid"],
-            process_id=event_data["process_id"],
-            image=event_data["image"],
-            image_loaded=event_data["image_loaded"],
-            file_version=event_data["file_version"],
-            description=event_data["description"],
-            product=event_data["product"],
-            company=event_data["company"],
-            original_file_name=event_data["original_file_name"],
-            hashes=event_data["hashes"],
-            signed=event_data["signed"],
-            signature=event_data["signature"],
-            signature_status=event_data["signature_status"],
-            user=event_data["user"],
-            rule_name=event_data["rule_name"],
-        )
-
-        # Save the log to the database
+        log = SysmonLog(**event_data)
         db.session.add(log)
         db.session.commit()
-
-        # Return a success response
         return jsonify({"message": "Log saved successfully"}), 201
+    except ET.ParseError as e:
+        print(f"[API] XML Parse Error: {e}")
+        return jsonify({"error": f"Failed to parse XML: {str(e)}"}), 400
+    except Exception as e:
+        print(f"[API] General Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
+@logs_bp.route('/application', methods=['POST'], strict_slashes=False)
+def application_logs():
+    try:
+        raw_data = request.data.decode('utf-8', errors='replace')
+        print("[API] Raw XML Data (Before Sanitization):", raw_data)
+        sanitized_data = sanitize_xml_data(raw_data)
+        print("[API] Raw XML Data (After Sanitization):", sanitized_data)
+        namespace = {'ns': 'http://schemas.microsoft.com/win/2004/08/events/event'}
+        field_map = {
+            "event_id": (".//ns:EventID", False, 0, int),
+            "time_created": (".//ns:TimeCreated", "SystemTime", None, lambda v: datetime.fromisoformat(v.replace('Z', '+00:00'))),
+            "computer": (".//ns:Computer", False, "Unknown", None),
+            "process_guid": (".//ns:Data[@Name='ProcessGuid']", False, "Unknown", None),
+            "process_id": (".//ns:Data[@Name='ProcessId']", False, 0, int),
+            "image": (".//ns:Data[@Name='Image']", False, "Unknown", None),
+            "target_object": (".//ns:Data[@Name='TargetObject']", False, "Unknown", None),
+            "details": (".//ns:Data[@Name='Details']", False, "", None),
+            "event_type": (".//ns:Data[@Name='EventType']", False, "Unknown", None),
+            "user": (".//ns:Data[@Name='User']", False, "Unknown", None),
+            "rule_name": (".//ns:Data[@Name='RuleName']", False, "", None),
+        }
+        event_data = parse_xml_event_data(sanitized_data, field_map, namespace)
+        print("[API] Extracted Application Event Data:", event_data)
+        log = ApplicationLog(**event_data)
+        db.session.add(log)
+        db.session.commit()
+        return jsonify({"message": "Application log saved successfully"}), 201
     except ET.ParseError as e:
         print(f"[API] XML Parse Error: {e}")
         return jsonify({"error": f"Failed to parse XML: {str(e)}"}), 400

@@ -6,7 +6,7 @@
 
 #include "../header/sysmon_manager.h"
 #include "../header/SysmonCollector.h"
-// #include "../header/WindowsLogCollector.h"
+#include "../header/ApplicationLogCollector.h"
 
 #include "../includes/json.hpp"
 
@@ -85,7 +85,19 @@ int main() {
             }
         });
 
+        std::cout << "[Application] Starting Application Log Collector..." << std::endl;
+        ApplicationLogCollector appLogCollector;
+        std::thread appLogThread([&]() {
+            if (appLogCollector.start()) {
+                std::cout << "[Application] Collector started.\n" << std::endl;
+                while (true) std::this_thread::sleep_for(std::chrono::seconds(1));
+            } else {
+                std::cerr << "[Application] Failed to start collector.\n" << std::endl;
+            }
+        });
+
         sysmonThread.join();
+        appLogThread.join();
 
     } catch (const std::exception& e) {
         std::cerr << "\n[Error] Exception: " << e.what() << "\n" << std::endl;

@@ -44,7 +44,9 @@ add_executable(${PROJECT_NAME}
         src/HttpClient.cpp
         includes/pugixml.cpp
         src/utils.cpp
-        header/utils.h
+        src/utils.cpp
+        src/ApplicationLogCollector.cpp
+        src/ApplicationHttpSender.cpp
 )
 
 # Link Windows Event API

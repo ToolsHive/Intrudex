@@ -26,3 +26,22 @@ class SysmonLog(db.Model):
 
     def __repr__(self):
         return f'<SysmonLog {self.id} - {self.image}>'
+
+class ApplicationLog(db.Model):
+    __tablename__ = 'application_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, nullable=False)
+    time_created = db.Column(db.DateTime, nullable=False)
+    computer = db.Column(db.String(256), nullable=False)
+    process_guid = db.Column(db.String(128), nullable=False)
+    process_id = db.Column(db.Integer, nullable=False)
+    image = db.Column(db.String(512), nullable=False)
+    target_object = db.Column(db.String(1024), nullable=False)
+    details = db.Column(db.Text, nullable=True)
+    event_type = db.Column(db.String(128), nullable=False)
+    user = db.Column(db.String(256), nullable=False)
+    rule_name = db.Column(db.String(256), nullable=True)
+
+    def __repr__(self):
+        return f'<ApplicationLog {self.id} - {self.image}>'

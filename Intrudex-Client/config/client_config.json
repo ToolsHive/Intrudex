@@ -2,6 +2,7 @@
   "sysmon_exe_path": "assets/Sysmon64.exe",
   "sysmon_config_path": "config/sysmonconfig-export.xml",
   "sysmon_url": "http://localhost/api/logs/sysmon/",
+  "application_url": "https://localhost/api/logs/application",
   "event_log_source": "Microsoft-Windows-Sysmon/Operational",
   "event_filter": "*[System[(Level=4 or Level=0)]]",
   "sleep_interval_ms": 1000,
@@ -10,7 +11,7 @@
 
   "http_config": {
     "user_agent": "Intrudex Client/1.0",
-    "content_type": "application/json",
+    "content_type": "application/xml",
     "use_https": false
   }
 }
