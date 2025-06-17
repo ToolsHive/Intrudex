@@ -2,6 +2,7 @@
 #include <iostream>
 #include <windows.h>
 #include <winevt.h>
+#include <mutex>
 
 #include "../header/ApplicationLogCollector.h"
 #include "../header/ApplicationHttpSender.h"
@@ -16,6 +17,10 @@ ApplicationLogCollector::ApplicationLogCollector() {
 }
 
 ApplicationLogCollector::~ApplicationLogCollector() {
+    if (subscriptionHandle) {
+        EvtClose(subscriptionHandle); // Ensure the subscription handle is closed
+        subscriptionHandle = nullptr;
+    }
     delete httpSender;
 }
 
@@ -90,24 +95,30 @@ bool ApplicationLogCollector::start() {
         return false;
     }
 
+    this->subscriptionHandle = subscriptionHandle;
+
     while (true) {
         Sleep(sleepIntervalMs);
     }
 
-    EvtClose(subscriptionHandle);
     return true;
 }
 
 void ApplicationLogCollector::handleEvent(const std::string& eventXml) const {
     if (logLevel == "debug") {
-        std::cout << "\n==================== [ Application Log Start ] ====================\n";
-        std::cout << prettyPrintXml(eventXml) << std::endl;
-        std::cout << "==================== [ Application Log End ] ======================\n";
-    }
+        std::lock_guard<std::mutex> lock(log_print_mutex);
+        try {
+            std::cout << "\n================[ Application Log Start ]====================\n";
+            std::cout << prettyPrintXml(eventXml) << std::endl;
+            std::cout << "=================[ Application Log End ]=====================\n";
 
-    if (httpSender->sendLog(eventXml)) {
-        std::cout << "[ApplicationLogCollector] Event sent successfully.\n";
-    } else {
-        std::cerr << "[ApplicationLogCollector] Failed to send event.\n";
+            if (httpSender->sendLog(eventXml)) {
+                std::cout << "[ApplicationLogCollector] Event sent successfully.\n";
+            } else {
+                std::cerr << "[ApplicationLogCollector] Failed to send event.\n";
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
+        }
     }
 }

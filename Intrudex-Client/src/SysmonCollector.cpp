@@ -4,6 +4,7 @@
 #include <winevt.h>
 #include <locale>
 #include <codecvt>
+#include <mutex>
 
 #include "../header/SysmonCollector.h"
 #include "../header/utils.h"
@@ -17,6 +18,10 @@ SysmonCollector::SysmonCollector() {
 }
 
 SysmonCollector::~SysmonCollector() {
+    if (subscriptionHandle) {
+        EvtClose(subscriptionHandle); // Ensure the subscription handle is closed
+        subscriptionHandle = nullptr;
+    }
     delete httpClient;
 }
 
@@ -94,24 +99,26 @@ bool SysmonCollector::start() {
         return false;
     }
 
+    this->subscriptionHandle = subscriptionHandle;
+
     while (true) {
         Sleep(sleepIntervalMs);
     }
 
-    EvtClose(subscriptionHandle);
     return true;
 }
 
 void SysmonCollector::handleEvent(const std::string& eventXml) const {
     if (logLevel == "debug") {
-        std::cout << "\n==================== [ Sysmon Log Start ] ====================\n";
+        std::lock_guard<std::mutex> lock(log_print_mutex);
+        std::cout << "\n====================[ Sysmon Log Start ]=====================\n";
         std::cout << prettyPrintXml(eventXml) << std::endl;
-        std::cout << "==================== [ Sysmon Log End ] ======================\n";
-    }
+        std::cout << "=====================[ Sysmon Log End ]======================\n";
 
-    if (sendEvents && httpClient->sendLog(eventXml)) {
-        std::cout << "[SysmonCollector] Event sent successfully.\n";
-    } else if (sendEvents) {
-        std::cout << "[SysmonCollector] Failed to send event.\n";
+        if (sendEvents && httpClient->sendLog(eventXml)) {
+            std::cout << "[SysmonCollector] Event sent successfully.\n";
+        } else if (sendEvents) {
+            std::cerr << "[SysmonCollector] Failed to send event.\n";
+        }
     }
 }

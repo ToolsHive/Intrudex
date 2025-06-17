@@ -4,6 +4,7 @@
 #include <chrono>
 #include <fstream>
 
+#include "../header/utils.h"
 #include "../header/sysmon_manager.h"
 #include "../header/SysmonCollector.h"
 #include "../header/ApplicationLogCollector.h"
@@ -42,6 +43,7 @@ bool isSysmonInstalled() {
 }
 
 int main() {
+    registerSignalHandlers(); // Register signal handlers for cleanup
     std::cout << R"(
    ___       _                  _
   |_ _|_ __ | |_ _ __ _   _  __| | _____  __
@@ -101,8 +103,10 @@ int main() {
 
     } catch (const std::exception& e) {
         std::cerr << "\n[Error] Exception: " << e.what() << "\n" << std::endl;
+        cleanupResources(); // Ensure cleanup before exiting
         return 1;
     }
 
+    cleanupResources(); // Final cleanup before exiting
     return 0;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <winevt.h>
+
 #include "ApplicationHttpSender.h"
 
 class ApplicationLogCollector {
@@ -18,6 +20,7 @@ private:
     std::string logLevel;
 
     ApplicationHttpSender* httpSender;
+    EVT_HANDLE subscriptionHandle = nullptr;
 
     void loadConfiguration();
     void handleEvent(const std::string& eventXml) const;

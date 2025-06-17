@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <winevt.h> // Include Windows Event Log API
+
 #include "HttpClient.h"
 
 class SysmonCollector {
@@ -19,8 +21,8 @@ private:
     bool sendEvents;
 
     HttpClient* httpClient;
+    EVT_HANDLE subscriptionHandle = nullptr;
 
     void loadConfiguration();
-
     void handleEvent(const std::string& eventXml) const;
 };
