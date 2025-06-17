@@ -2,12 +2,11 @@
 #include <iostream>
 #include <windows.h>
 #include <winevt.h>
-#include <sstream>
 #include <locale>
 #include <codecvt>
 
 #include "../header/SysmonCollector.h"
-#include "../includes/pugixml.hpp"
+#include "../header/utils.h"
 #include "../includes/json.hpp"
 
 using json = nlohmann::json;
@@ -30,7 +29,7 @@ void SysmonCollector::loadConfiguration() {
     std::ifstream configFile("config/client_config.json");
     if (!configFile.is_open()) {
         std::cerr << "[SysmonCollector] Failed to open configuration file. Using default values.\n";
-        serverUrl = "http://localhost/api/logs/upload";
+        serverUrl = "http://localhost/api/logs/sysmon";
         eventLogSource = L"Microsoft-Windows-Sysmon/Operational";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
         sleepIntervalMs = 1000;
@@ -43,7 +42,7 @@ void SysmonCollector::loadConfiguration() {
         json config;
         configFile >> config;
 
-        serverUrl = config.value("server_url", "http://localhost/api/logs/upload");
+        serverUrl = config.value("server_url", "http://localhost/api/logs/sysmon");
         eventLogSource = utf8_to_wstring(config.value("event_log_source", "Microsoft-Windows-Sysmon/Operational"));
         eventFilter = utf8_to_wstring(config.value("event_filter", "*[System[(Level=4 or Level=0)]]"));
         sleepIntervalMs = config.value("sleep_interval_ms", 1000);
@@ -53,7 +52,7 @@ void SysmonCollector::loadConfiguration() {
         std::cout << "[SysmonCollector] Configuration loaded successfully.\n";
     } catch (const std::exception& e) {
         std::cerr << "[SysmonCollector] Error parsing config: " << e.what() << ". Using default values.\n";
-        serverUrl = "http://localhost/api/logs/upload";
+        serverUrl = "http://localhost/api/logs/sysmon";
         eventLogSource = L"Microsoft-Windows-Sysmon/Operational";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
         sleepIntervalMs = 1000;
@@ -108,29 +107,16 @@ bool SysmonCollector::start() {
     return true;
 }
 
-std::string prettyPrintXml(const std::string& xml) {
-    pugi::xml_document doc;
-    if (!doc.load_string(xml.c_str())) {
-        return xml;
-    }
-
-    std::stringstream ss;
-    doc.save(ss, "    ", pugi::format_indent);
-    return ss.str();
-}
-
 void SysmonCollector::handleEvent(const std::string& eventXml) const {
-    if (logLevel == "info" || logLevel == "debug") {
-        std::cout << "\n==================== Sysmon Event Received ====================\n";
+    if (logLevel == "debug") {
+        std::cout << "\n==================== [ Sysmon Log Start ] ====================\n";
         std::cout << prettyPrintXml(eventXml) << std::endl;
-        std::cout << "==============================================================\n";
+        std::cout << "==================== [ Sysmon Log End ] ======================\n";
     }
 
     if (sendEvents && httpClient->sendLog(eventXml)) {
         std::cout << "[SysmonCollector] Event sent successfully.\n";
-        std::cout << "==============================================================\n";
     } else if (sendEvents) {
-        std::cerr << "[SysmonCollector] Failed to send event.\n";
-        std::cout << "==============================================================\n";
+        std::cout << "[SysmonCollector] Failed to send event.\n";
     }
 }

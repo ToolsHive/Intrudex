@@ -43,6 +43,8 @@ add_executable(${PROJECT_NAME}
         src/SysmonCollector.cpp
         src/HttpClient.cpp
         includes/pugixml.cpp
+        src/utils.cpp
+        header/utils.h
 )
 
 # Link Windows Event API

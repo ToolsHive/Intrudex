@@ -6,11 +6,10 @@ import re
 
 from app.models.logs import SysmonLog
 
-
 logs_bp = Blueprint('logs', __name__, url_prefix='/api/logs')
 
-@logs_bp.route('/upload', methods=['POST'])
-def upload_logs():
+@logs_bp.route('/sysmon', methods=['POST'], strict_slashes=False)
+def sysmon_logs():
     try:
         # Get raw XML data from the request, handling invalid UTF-8 bytes
         raw_data = request.data.decode('utf-8', errors='replace')
@@ -39,7 +38,8 @@ def upload_logs():
             "description": root.findtext(".//ns:Data[@Name='Description']", namespaces=namespace) or "Unknown",
             "product": root.findtext(".//ns:Data[@Name='Product']", namespaces=namespace) or "Unknown",
             "company": root.findtext(".//ns:Data[@Name='Company']", namespaces=namespace) or "Unknown",
-            "original_file_name": root.findtext(".//ns:Data[@Name='OriginalFileName']", namespaces=namespace) or "Unknown",
+            "original_file_name": root.findtext(".//ns:Data[@Name='OriginalFileName']",
+                                                namespaces=namespace) or "Unknown",
             "hashes": root.findtext(".//ns:Data[@Name='Hashes']", namespaces=namespace) or "Unknown",
             "signed": root.findtext(".//ns:Data[@Name='Signed']", namespaces=namespace) == 'true',
             "signature": root.findtext(".//ns:Data[@Name='Signature']", namespaces=namespace) or "Unknown",
