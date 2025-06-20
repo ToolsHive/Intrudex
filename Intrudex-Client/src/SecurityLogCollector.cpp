@@ -106,7 +106,19 @@ bool SecurityLogCollector::start() {
 
 void SecurityLogCollector::handleEvent(const std::string& eventXml) const {
     std::lock_guard<std::mutex> lock(log_print_mutex);
+
     try {
+        // Check if the log contains all unknown entries
+        if (eventXml.find("<Data Name=\"RuleName\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"Image\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"CommandLine\">Unknown</Data>") != std::string::npos) {
+            std::cerr << "[SecurityLogCollector] Log contains all unknown entries. Skipping.\n";
+            std::cout << "\n================[ Skipped Security Log Start ]====================\n";
+            std::cout << prettyPrintXml(eventXml) << std::endl;
+            std::cout << "=================[ Skipped Security Log End ]=====================\n";
+            return;
+            }
+
         std::cout << "\n================[ Security Log Start ]====================\n";
         std::cout << prettyPrintXml(eventXml) << std::endl;
         std::cout << "=================[ Security Log End ]=====================\n";

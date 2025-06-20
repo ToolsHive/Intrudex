@@ -109,16 +109,30 @@ bool SysmonCollector::start() {
 }
 
 void SysmonCollector::handleEvent(const std::string& eventXml) const {
-    if (logLevel == "debug") {
-        std::lock_guard<std::mutex> lock(log_print_mutex);
-        std::cout << "\n====================[ Sysmon Log Start ]=====================\n";
-        std::cout << prettyPrintXml(eventXml) << std::endl;
-        std::cout << "=====================[ Sysmon Log End ]======================\n";
+    std::lock_guard<std::mutex> lock(log_print_mutex);
 
-        if (sendEvents && httpClient->sendLog(eventXml)) {
-            std::cout << "[SysmonCollector] Event sent successfully.\n";
-        } else if (sendEvents) {
-            std::cerr << "[SysmonCollector] Failed to send event.\n";
+    try {
+        // Check if the log contains all unknown entries
+        if (eventXml.find("<Data Name=\"RuleName\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"Image\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"CommandLine\">Unknown</Data>") != std::string::npos) {
+            std::cerr << "[SysmonLogCollector] Log contains all unknown entries. Skipping.\n";
+            std::cout << "\n================[ Sysmon Log Start ]====================\n";
+            std::cout << prettyPrintXml(eventXml) << std::endl;
+            std::cout << "=================[ Sysmon Log End ]=====================\n";
+            return;
+            }
+
+        std::cout << "\n================[ Sysmon Log Start ]====================\n";
+        std::cout << prettyPrintXml(eventXml) << std::endl;
+        std::cout << "=================[ Sysmon Log End ]=====================\n";
+
+        if (httpClient->sendLog(eventXml)) {
+            std::cout << "[SysmonLogCollector] Event sent successfully.\n";
+        } else {
+            std::cerr << "[SysmonLogCollector] Failed to send event.\n";
         }
+    } catch (const std::exception& e) {
+        std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
     }
 }

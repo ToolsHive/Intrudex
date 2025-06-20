@@ -105,20 +105,30 @@ bool ApplicationLogCollector::start() {
 }
 
 void ApplicationLogCollector::handleEvent(const std::string& eventXml) const {
-    if (logLevel == "debug") {
-        std::lock_guard<std::mutex> lock(log_print_mutex);
-        try {
-            std::cout << "\n================[ Application Log Start ]====================\n";
-            std::cout << prettyPrintXml(eventXml) << std::endl;
-            std::cout << "=================[ Application Log End ]=====================\n";
+    std::lock_guard<std::mutex> lock(log_print_mutex);
 
-            if (httpSender->sendLog(eventXml)) {
-                std::cout << "[ApplicationLogCollector] Event sent successfully.\n";
-            } else {
-                std::cerr << "[ApplicationLogCollector] Failed to send event.\n";
+    try {
+        // Check if the log contains all unknown entries
+        if (eventXml.find("<Data Name=\"RuleName\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"Image\">Unknown</Data>") != std::string::npos &&
+            eventXml.find("<Data Name=\"CommandLine\">Unknown</Data>") != std::string::npos) {
+            std::cerr << "[ApplicationLogCollector] Log contains all unknown entries. Skipping.\n";
+            std::cout << "\n================[ Skipped Application Log Start ]====================\n";
+            std::cout << prettyPrintXml(eventXml) << std::endl;
+            std::cout << "=================[ Skipped Application Log End ]=====================\n";
+            return;
             }
-        } catch (const std::exception& e) {
-            std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
+
+        std::cout << "\n================[ Application Log Start ]====================\n";
+        std::cout << prettyPrintXml(eventXml) << std::endl;
+        std::cout << "=================[ Application Log End ]=====================\n";
+
+        if (httpSender->sendLog(eventXml)) {
+            std::cout << "[ApplicationLogCollector] Event sent successfully.\n";
+        } else {
+            std::cerr << "[ApplicationLogCollector] Failed to send event.\n";
         }
+    } catch (const std::exception& e) {
+        std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
     }
 }

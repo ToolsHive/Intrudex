@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "../header/utils.h"
+
 #include "../header/sysmon_manager.h"
 #include "../header/SysmonCollector.h"
 #include "../header/ApplicationLogCollector.h"
@@ -14,6 +15,19 @@
 #include "../includes/json.hpp"
 
 using json = nlohmann::json;
+
+void printBanner() {
+    std::cout << R"(
+   ___       _                  _
+  |_ _|_ __ | |_ _ __ _   _  __| | _____  __
+   | || '_ \| __| '__| | | |/ _` |/ _ \ \/ /
+   | || | | | |_| |  | |_| | (_| |  __/>  <
+  |___|_| |_|\__|_|   \__,_|\__,_|\___/_/\_\
+
+ Intrudex Client Agent - Powered by Sigma Rules
+===========================================================
+)" << std::endl;
+}
 
 // Load client config from JSON file
 json loadClientConfig(const std::string& configPath) {
@@ -45,16 +59,8 @@ bool isSysmonInstalled() {
 }
 
 int main() {
-    registerSignalHandlers(); // Register signal handlers for cleanup
-    std::cout << R"(
-   ___       _                  _
-  |_ _|_ __ | |_ _ __ _   _  __| | _____  __
-   | || '_ \| __| '__| | | |/ _` |/ _ \ \/ /
-   | || | | | |_| |  | |_| | (_| |  __/>  <
-  |___|_| |_|\__|_|   \__,_|\__,_|\___/_/\_\
-
- Intrudex Client Agent - Powered by Sigma Rules
-)" << std::endl;
+    registerSignalHandlers();
+    printBanner();
 
     try {
         const std::string exeDir = getExecutableDirectory();
@@ -64,21 +70,23 @@ int main() {
         const std::string sysmonPath = exeDir + "\\" + config["sysmon_exe_path"].get<std::string>();
         const std::string configPath = exeDir + "\\" + config["sysmon_config_path"].get<std::string>();
 
-        std::cout << "\n[System] Checking Sysmon status..." << std::endl;
+        std::cout << "\n[System] Checking Sysmon status...\n" << std::endl;
 
         if (isSysmonInstalled()) {
             std::cout << "[System] Sysmon is already installed.\n" << std::endl;
         } else {
-            std::cout << "[System] Sysmon not found. Attempting installation..." << std::endl;
+            std::cout << "[System] Sysmon not found. Attempting installation...\n" << std::endl;
             if (SysmonManager::install(sysmonPath, configPath)) {
-                std::cout << "[System] Sysmon installed successfully.\n" << std::endl;
+                std::cout << "[SysmonManager] Sysmon installed successfully.\n" << std::endl;
             } else {
                 std::cerr << "[Error] Failed to install Sysmon.\n" << std::endl;
                 return 1;
             }
         }
 
-        std::cout << "[Sysmon] Starting Sysmon Collector..." << std::endl;
+        std::cout << "===========================================================\n" << std::endl;
+
+        std::cout << "[Sysmon] Starting Sysmon Collector...\n" << std::endl;
         SysmonCollector sysmonCollector;
         std::thread sysmonThread([&]() {
             if (sysmonCollector.start()) {
@@ -89,7 +97,7 @@ int main() {
             }
         });
 
-        std::cout << "[Application] Starting Application Log Collector..." << std::endl;
+        std::cout << "[Application] Starting Application Log Collector...\n" << std::endl;
         ApplicationLogCollector appLogCollector;
         std::thread appLogThread([&]() {
             if (appLogCollector.start()) {
@@ -100,7 +108,7 @@ int main() {
             }
         });
 
-        std::cout << "[Security] Starting Security Log Collector..." << std::endl;
+        std::cout << "[Security] Starting Security Log Collector...\n" << std::endl;
         SecurityLogCollector securityLogCollector;
         std::thread securityLogThread([&]() {
             if (securityLogCollector.start()) {
@@ -111,7 +119,7 @@ int main() {
             }
         });
 
-        std::cout << "[System] Starting System Log Collector..." << std::endl;
+        std::cout << "[System] Starting System Log Collector...\n" << std::endl;
         SystemLogCollector systemLogCollector;
         std::thread systemLogThread([&]() {
             if (systemLogCollector.start()) {
