@@ -5,7 +5,7 @@ charset-normalizer==3.4.2
 idna==3.10
 pyarmor==9.1.6
 pyarmor.cli.core==7.6.6
-requests==2.32.3
+requests==2.32.4
 soupsieve==2.7
 typing_extensions==4.13.2
 urllib3==2.4.0
