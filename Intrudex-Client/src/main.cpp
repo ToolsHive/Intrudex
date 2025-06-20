@@ -8,6 +8,7 @@
 #include "../header/sysmon_manager.h"
 #include "../header/SysmonCollector.h"
 #include "../header/ApplicationLogCollector.h"
+#include "../header/SecurityLogCollector.h"
 
 #include "../includes/json.hpp"
 
@@ -98,8 +99,20 @@ int main() {
             }
         });
 
+        std::cout << "[Security] Starting Security Log Collector..." << std::endl;
+        SecurityLogCollector securityLogCollector;
+        std::thread securityLogThread([&]() {
+            if (securityLogCollector.start()) {
+                std::cout << "[Security] Collector started.\n" << std::endl;
+                while (true) std::this_thread::sleep_for(std::chrono::seconds(1));
+            } else {
+                std::cerr << "[Security] Failed to start collector.\n" << std::endl;
+            }
+        });
+
         sysmonThread.join();
         appLogThread.join();
+        securityLogThread.join();
 
     } catch (const std::exception& e) {
         std::cerr << "\n[Error] Exception: " << e.what() << "\n" << std::endl;

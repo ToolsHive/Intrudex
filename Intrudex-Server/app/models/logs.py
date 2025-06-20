@@ -45,3 +45,23 @@ class ApplicationLog(db.Model):
 
     def __repr__(self):
         return f'<ApplicationLog {self.id} - {self.image}>'
+
+class SecurityLog(db.Model):
+    __tablename__ = 'security_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, nullable=False)
+    time_created = db.Column(db.DateTime, nullable=False)
+    computer = db.Column(db.String(255), nullable=False)
+    target_user_name = db.Column(db.String(255), nullable=True)
+    target_domain_name = db.Column(db.String(255), nullable=True)
+    target_sid = db.Column(db.String(255), nullable=True)
+    subject_user_sid = db.Column(db.String(255), nullable=True)
+    subject_user_name = db.Column(db.String(255), nullable=True)
+    subject_domain_name = db.Column(db.String(255), nullable=True)
+    subject_logon_id = db.Column(db.String(255), nullable=True)
+    caller_process_id = db.Column(db.String(255), nullable=True)
+    caller_process_name = db.Column(db.String(512), nullable=True)
+
+    def __repr__(self):
+        return f'<SecurityLog {self.id} - {self.event_id}>'

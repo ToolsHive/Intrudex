@@ -47,6 +47,8 @@ add_executable(${PROJECT_NAME}
         src/utils.cpp
         src/ApplicationLogCollector.cpp
         src/ApplicationHttpSender.cpp
+        src/SecurityLogCollector.cpp
+        src/SecurityHttpSender.cpp
 )
 
 # Link Windows Event API

@@ -41,7 +41,7 @@ void ApplicationLogCollector::loadConfiguration() {
         configFile >> config;
 
         apiUrl = config.value("application_url", "http://localhost/api/logs/application");
-        eventLogSource = utf8_to_wstring(config.value("event_log_source", "Application"));
+        eventLogSource = utf8_to_wstring(config.value("application_log_source", "Application"));
         eventFilter = utf8_to_wstring(config.value("event_filter", "*[System[(Level=4 or Level=0)]]"));
         sleepIntervalMs = config.value("sleep_interval_ms", 5000);
         logLevel = config.value("log_level", "info");
