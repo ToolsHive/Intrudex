@@ -4,6 +4,8 @@
   "sysmon_url": "http://localhost/api/logs/sysmon/",
   "application_url": "https://localhost/api/logs/application",
   "security_url": "http://localhost/api/logs/security",
+  "system_url": "http://localhost/api/logs/system",
+  "system_event_log_source": "System",
   "application_log_source": "Application",
   "security_event_log_source": "Security",
   "event_log_source": "Microsoft-Windows-Sysmon/Operational",

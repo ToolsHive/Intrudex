@@ -9,6 +9,7 @@
 #include "../header/SysmonCollector.h"
 #include "../header/ApplicationLogCollector.h"
 #include "../header/SecurityLogCollector.h"
+#include "../header/SystemLogCollector.h"
 
 #include "../includes/json.hpp"
 
@@ -110,9 +111,21 @@ int main() {
             }
         });
 
+        std::cout << "[System] Starting System Log Collector..." << std::endl;
+        SystemLogCollector systemLogCollector;
+        std::thread systemLogThread([&]() {
+            if (systemLogCollector.start()) {
+                std::cout << "[System] Collector started.\n" << std::endl;
+                while (true) std::this_thread::sleep_for(std::chrono::seconds(1));
+            } else {
+                std::cerr << "[System] Failed to start collector.\n" << std::endl;
+            }
+        });
+
         sysmonThread.join();
         appLogThread.join();
         securityLogThread.join();
+        systemLogThread.join();
 
     } catch (const std::exception& e) {
         std::cerr << "\n[Error] Exception: " << e.what() << "\n" << std::endl;

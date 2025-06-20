@@ -65,3 +65,22 @@ class SecurityLog(db.Model):
 
     def __repr__(self):
         return f'<SecurityLog {self.id} - {self.event_id}>'
+
+class SystemLog(db.Model):
+    __tablename__ = 'system_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, nullable=False)
+    time_created = db.Column(db.DateTime, nullable=False)
+    computer = db.Column(db.String(255), nullable=False)
+    provider_name = db.Column(db.String(255), nullable=True)
+    provider_guid = db.Column(db.String(64), nullable=True)
+    event_source_name = db.Column(db.String(255), nullable=True)
+    event_record_id = db.Column(db.Integer, nullable=True)
+    process_id = db.Column(db.Integer, nullable=True)
+    thread_id = db.Column(db.Integer, nullable=True)
+    user_id = db.Column(db.String(128), nullable=True)
+    event_data = db.Column(db.JSON, nullable=True)  # Store all params as JSON
+
+    def __repr__(self):
+        return f'<SystemLog {self.id} - {self.event_id}>'

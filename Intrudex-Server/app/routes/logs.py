@@ -4,7 +4,7 @@ from datetime import datetime
 from app.db import db
 import re
 
-from app.models.logs import SysmonLog, ApplicationLog, SecurityLog
+from app.models.logs import SysmonLog, ApplicationLog, SecurityLog, SystemLog
 
 logs_bp = Blueprint('logs', __name__, url_prefix='/api/logs')
 
@@ -133,6 +133,67 @@ def security_logs():
         db.session.add(log)
         db.session.commit()
         return jsonify({"message": "Security log saved successfully"}), 201
+    except ET.ParseError as e:
+        print(f"[API] XML Parse Error: {e}")
+        return jsonify({"error": f"Failed to parse XML: {str(e)}"}), 400
+    except Exception as e:
+        print(f"[API] General Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@logs_bp.route('/system', methods=['POST'], strict_slashes=False)
+def system_logs():
+    try:
+        raw_data = request.data.decode('utf-8', errors='replace')
+        print("[API] Raw XML Data (Before Sanitization):", raw_data)
+        sanitized_data = sanitize_xml_data(raw_data)
+        print("[API] Raw XML Data (After Sanitization):", sanitized_data)
+        namespace = {'ns': 'http://schemas.microsoft.com/win/2004/08/events/event'}
+        root = ET.fromstring(sanitized_data)
+
+        # Extract main fields
+        def get_attr(elem, attr):
+            return elem.attrib.get(attr) if elem is not None and attr in elem.attrib else None
+
+        event_id = int(root.findtext('.//ns:EventID', namespaces=namespace) or 0)
+        time_created_str = get_attr(root.find('.//ns:TimeCreated', namespaces=namespace), 'SystemTime')
+        time_created = datetime.fromisoformat(time_created_str.replace('Z', '+00:00')) if time_created_str else None
+        computer = root.findtext('.//ns:Computer', namespaces=namespace) or "Unknown"
+        provider = root.find('.//ns:Provider', namespaces=namespace)
+        provider_name = get_attr(provider, 'Name')
+        provider_guid = get_attr(provider, 'Guid')
+        event_source_name = get_attr(provider, 'EventSourceName')
+        event_record_id = int(root.findtext('.//ns:EventRecordID', namespaces=namespace) or 0)
+        execution = root.find('.//ns:Execution', namespaces=namespace)
+        process_id = int(get_attr(execution, 'ProcessID') or 0)
+        thread_id = int(get_attr(execution, 'ThreadID') or 0)
+        user_id = get_attr(root.find('.//ns:Security', namespaces=namespace), 'UserID')
+
+        # Collect all <Data Name="..."> under <EventData>
+        event_data_elem = root.find('.//ns:EventData', namespaces=namespace)
+        event_data = {}
+        if event_data_elem is not None:
+            for data_elem in event_data_elem.findall('ns:Data', namespaces=namespace):
+                name = get_attr(data_elem, 'Name')
+                value = data_elem.text
+                if name:
+                    event_data[name] = value
+
+        log = SystemLog(
+            event_id=event_id,
+            time_created=time_created,
+            computer=computer,
+            provider_name=provider_name,
+            provider_guid=provider_guid,
+            event_source_name=event_source_name,
+            event_record_id=event_record_id,
+            process_id=process_id,
+            thread_id=thread_id,
+            user_id=user_id,
+            event_data=event_data
+        )
+        db.session.add(log)
+        db.session.commit()
+        return jsonify({"message": "System log saved successfully"}), 201
     except ET.ParseError as e:
         print(f"[API] XML Parse Error: {e}")
         return jsonify({"error": f"Failed to parse XML: {str(e)}"}), 400
