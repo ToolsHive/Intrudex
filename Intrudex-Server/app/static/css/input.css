@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* ------------------------------
+/* ==============================
    Custom Fonts
---------------------------------*/
+   ============================== */
 @font-face {
   font-family: 'Roboto';
   src: url('../fonts/Roboto-Regular.ttf') format('truetype');
@@ -21,7 +21,6 @@
   font-weight: 700;
   font-style: italic;
 }
-
 @font-face {
   font-family: 'Ubuntu';
   src: url('../fonts/Ubuntu-Regular.ttf') format('truetype');
@@ -41,32 +40,219 @@
   font-style: italic;
 }
 
-/* ------------------------------
-   Tailwind Theme Variables
---------------------------------*/
+/* ==============================
+   Theme Variables
+   ============================== */
 @theme {
   --font-heading: 'Roboto', sans-serif;
   --font-body: 'Ubuntu', sans-serif;
 }
 
-/* ------------------------------
-   Global Typography
---------------------------------*/
+/* ==============================
+   Global Styles
+   ============================== */
 html {
   @apply h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-
 body {
   font-family: var(--font-body), sans-serif;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), sans-serif;
 }
 
-/* ------------------------------
+/* Hide scrollbars (all browsers) */
+::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+}
+html, body, * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* ==============================
+   Utility Classes
+   ============================== */
+.fade-in {
+  animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px);}
+  to { opacity: 1; transform: none; }
+}
+.hover-raise {
+  transition: transform .2s, box-shadow .2s;
+}
+.hover-raise:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.badge {
+  display: inline-block;
+  border-radius: 0.5rem;
+  padding: 0.2em 0.7em;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.badge-sysmon { background: #2563eb22; color: #60a5fa; }
+.badge-application { background: #05966922; color: #4ade80; }
+.badge-security { background: #7c3aed22; color: #a78bfa; }
+.badge-system { background: #dc262622; color: #f87171; }
+.truncate-tooltip {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+.truncate-tooltip:hover::after {
+  content: attr(data-full);
+  position: absolute;
+  background: #222;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  left: 0; top: 100%;
+  z-index: 10;
+  white-space: pre-line;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px #0008;
+  min-width: 200px;
+  max-width: 400px;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #2563eb 60%, #60a5fa 100%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-right: 0.75rem;
+  box-shadow: 0 2px 8px #0004;
+}
+.enrichable {
+  text-decoration: underline dotted #60a5fa 1.5px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.enrichable:hover {
+  color: #60a5fa;
+}
+
+/* ==============================
    Components
---------------------------------*/
+   ============================== */
 .danger-button {
   @apply inline-block bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-medium text-white transition;
+}
+
+/* ==============================
+   Modal & Popover
+   ============================== */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: #18181b;
+  border-radius: 1rem;
+  padding: 2rem;
+  min-width: 320px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px #000a;
+  color: #fff;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 1.5rem;
+}
+.modal-content pre {
+  background: #23272e;
+  color: #b5e0ff;
+  padding: 1em;
+  border-radius: 0.5em;
+  font-size: 0.95em;
+}
+.modal-label { color: #60a5fa; font-weight: bold; }
+.modal-row { margin-bottom: 0.5em; }
+.modal-title { font-size: 1.2em; font-weight: bold; margin-bottom: 1em; }
+.popover-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+.popover-content {
+  position: absolute;
+  background: #23272e;
+  color: #b5e0ff;
+  border-radius: 0.75rem;
+  padding: 1em 1.5em;
+  min-width: 220px;
+  max-width: 350px;
+  box-shadow: 0 8px 32px #000a;
+  z-index: 100;
+  font-size: 0.97em;
+  pointer-events: auto;
+  border: 1px solid #333;
+  animation: fadeIn 0.2s;
+}
+.popover-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid #23272e;
+  top: -10px;
+  left: 30px;
+}
+
+/* ==============================
+   Dashboard Widgets
+   ============================== */
+@media (min-width: 768px) {
+  .dashboard-widget-min-h {
+    min-height: 420px;
+    max-height: 420px;
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-widget-min-h {
+    min-height: 260px;
+    max-height: 420px;
+  }
+}
+.dashboard-widget-scroll {
+  overflow-y: auto;
 }

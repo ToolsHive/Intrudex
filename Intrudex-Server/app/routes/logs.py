@@ -1,12 +1,12 @@
-from flask import Blueprint, request, jsonify
-import xml.etree.ElementTree as ET
-from datetime import datetime
-from app.db import db
 import re
-from rich import print as rich_print
+from app.db import db
+from sqlalchemy import func
+from datetime import datetime
 from rich.pretty import Pretty
 from rich.syntax import Syntax
-
+import xml.etree.ElementTree as ET
+from rich import print as rich_print
+from flask import Blueprint, request, jsonify, render_template_string
 from app.models.logs import SysmonLog, ApplicationLog, SecurityLog, SystemLog
 
 logs_bp = Blueprint('logs', __name__, url_prefix='/api/logs')
@@ -233,3 +233,131 @@ def system_logs():
     except Exception as e:
         rich_print(f"[bold red][API] General Error:[/bold red] {e}")
     return jsonify({"error": str(e)}), 500
+
+@logs_bp.route('/counts', methods=['GET'])
+def get_log_counts():
+    return jsonify({
+        "sysmon": SysmonLog.query.count(),
+        "application": ApplicationLog.query.count(),
+        "security": SecurityLog.query.count(),
+        "system": SystemLog.query.count()
+    })
+
+@logs_bp.route('/recent', methods=['GET'])
+def get_recent_logs():
+    limit = int(request.args.get('limit', 10))
+    logs = SystemLog.query.order_by(SystemLog.time_created.desc()).limit(limit).all()
+    rows = []
+    for log in logs:
+        # Show a button for details, not the raw/truncated string
+        rows.append(f"""
+        <tr class="border-b border-gray-800 hover:bg-gray-800 transition cursor-pointer" data-log-id="{log.id}">
+            <td class="py-2 px-3">
+                <span class="badge badge-system">System</span>
+            </td>
+            <td class="py-2 px-3 text-gray-400">{log.time_created.strftime('%Y-%m-%d %H:%M:%S') if log.time_created else ''}</td>
+            <td class="py-2 px-3 text-blue-300">#{log.event_id}</td>
+            <td class="py-2 px-3 text-green-300">{log.computer}</td>
+            <td class="py-2 px-3">
+                <button class="px-3 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition" onclick="event.stopPropagation(); showSystemLogDetail({log.id});">View</button>
+            </td>
+        </tr>
+        """)
+    return render_template_string('<tbody id="log-table-body">\n' + '\n'.join(rows) + '\n</tbody>')
+
+@logs_bp.route('/system/<int:log_id>', methods=['GET'])
+def get_system_log_detail(log_id):
+    log = SystemLog.query.get_or_404(log_id)
+    # Render event_data as a table if it's a dict
+    event_data_html = ""
+    if isinstance(log.event_data, dict) and log.event_data:
+        event_data_html = "<table class='min-w-full text-sm text-left mb-2'><thead><tr><th class='py-1 px-2 text-blue-300'>Key</th><th class='py-1 px-2 text-gray-300'>Value</th></tr></thead><tbody>"
+        for k, v in log.event_data.items():
+            event_data_html += f"<tr><td class='py-1 px-2 text-blue-200'>{k}</td><td class='py-1 px-2 text-gray-200'>{v}</td></tr>"
+        event_data_html += "</tbody></table>"
+    else:
+        event_data_html = f"<pre>{log.event_data}</pre>"
+
+    html = f"""
+    <div class="modal-title">System Log Details</div>
+    <div class="modal-row"><span class="modal-label">Event ID:</span> {log.event_id}</div>
+    <div class="modal-row"><span class="modal-label">Time:</span> {log.time_created}</div>
+    <div class="modal-row"><span class="modal-label">Computer:</span> {log.computer}</div>
+    <div class="modal-row"><span class="modal-label">Provider:</span> {log.provider_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Process ID:</span> {log.process_id or ''}</div>
+    <div class="modal-row"><span class="modal-label">Thread ID:</span> {log.thread_id or ''}</div>
+    <div class="modal-row"><span class="modal-label">User ID:</span> {log.user_id or ''}</div>
+    <div class="modal-row"><span class="modal-label">Event Data:</span></div>
+    {event_data_html}
+    """
+    return html
+
+@logs_bp.route('/top-users', methods=['GET'])
+def get_top_users():
+    sysmon_users = db.session.query(SysmonLog.user, func.count().label('count')).group_by(SysmonLog.user)
+    app_users = db.session.query(ApplicationLog.user, func.count().label('count')).group_by(ApplicationLog.user)
+    user_counts = {}
+    for user, count in sysmon_users.union_all(app_users):
+        if user:
+            user_counts[user] = user_counts.get(user, 0) + count
+    top = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    items = []
+    for user, count in top:
+        initials = ''.join([w[0] for w in user.split() if w]).upper()[:2]
+        items.append(f"""
+        <li class="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-2 shadow hover-raise cursor-pointer" data-user="{user}">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white font-bold text-lg">{initials}</span>
+            <span class="flex-1 truncate" title="{user}">{user}</span>
+            <span class="badge badge-system">{count} logs</span>
+        </li>
+        """)
+    return render_template_string('<ul id="top-users" class="space-y-3">\n' + '\n'.join(items) + '\n</ul>')
+
+@logs_bp.route('/user/<user>', methods=['GET'])
+def get_user_detail(user):
+    sysmon = SysmonLog.query.filter(SysmonLog.user == user).order_by(SysmonLog.time_created.desc()).limit(5).all()
+    app = ApplicationLog.query.filter(ApplicationLog.user == user).order_by(ApplicationLog.time_created.desc()).limit(5).all()
+    html = f"<div class='modal-title'>User: {user}</div>"
+    html += "<div class='modal-row'><b>Recent Sysmon Logs:</b></div>"
+    for log in sysmon:
+        html += f"<div class='modal-row'><span class='modal-label'>Event:</span> {log.event_id} <span class='modal-label'>Time:</span> {log.time_created} <span class='modal-label'>Image:</span> {log.image}</div>"
+    html += "<div class='modal-row'><b>Recent Application Logs:</b></div>"
+    for log in app:
+        html += f"<div class='modal-row'><span class='modal-label'>Event:</span> {log.event_id} <span class='modal-label'>Time:</span> {log.time_created} <span class='modal-label'>Image:</span> {log.image}</div>"
+    return html
+
+@logs_bp.route('/alerts', methods=['GET'])
+def get_recent_alerts():
+    logs = SecurityLog.query.order_by(SecurityLog.time_created.desc()).limit(10).all()
+    items = []
+    for log in logs:
+        user = log.subject_user_name or "Unknown"
+        items.append(f"""
+        <li class="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-2 shadow hover-raise cursor-pointer" data-alert-id="{log.id}">
+            <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-xl mr-2"></i>
+            <span class="flex-1 truncate" title="Security Event {log.event_id} on {log.computer} by {user}">
+                <span class="text-yellow-300 font-semibold">Event {log.event_id}</span>
+                <span class="text-gray-300">on</span>
+                <span class="text-blue-300">{log.computer}</span>
+                <span class="text-gray-300">by</span>
+                <span class="text-green-300">{user}</span>
+            </span>
+            <span class="text-xs text-gray-400">{log.time_created.strftime('%H:%M:%S')}</span>
+        </li>
+        """)
+    return render_template_string('<ul id="recent-alerts" class="space-y-3">\n' + '\n'.join(items) + '\n</ul>')
+
+@logs_bp.route('/security/<int:alert_id>', methods=['GET'])
+def get_security_log_detail(alert_id):
+    log = SecurityLog.query.get_or_404(alert_id)
+    html = f"""
+    <div class="modal-title">Security Alert Details</div>
+    <div class="modal-row"><span class="modal-label">Event ID:</span> {log.event_id}</div>
+    <div class="modal-row"><span class="modal-label">Time:</span> {log.time_created}</div>
+    <div class="modal-row"><span class="modal-label">Computer:</span> {log.computer}</div>
+    <div class="modal-row"><span class="modal-label">Subject User:</span> {log.subject_user_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Target User:</span> {log.target_user_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Domain:</span> {log.subject_domain_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Caller Process:</span> {log.caller_process_name or ''}</div>
+    """
+    return html
