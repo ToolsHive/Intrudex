@@ -3,20 +3,11 @@
 {% block title %}INTRUDEX{% endblock %}
 
 {% block head %}
-     <link href="{{ url_for('static', filename='css/fontawesome.min.css') }}" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
 {% endblock %}
 
 {% block content %}
 <div class="min-h-screen flex flex-col">
-  <!-- Header -->
-  <header class="bg-gray-900 shadow fade-in">
-    <div class="max-w-7xl mx-auto py-6 px-4 flex justify-between items-center">
-      <h1 class="text-3xl font-extrabold tracking-tight text-white">INTRUDEX Dashboard</h1>
-      <span class="text-gray-400 text-sm">Last updated: <span id="last-updated"></span></span>
-    </div>
-  </header>
   <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">

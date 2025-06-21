@@ -1,8 +1,10 @@
-{% extends "base.html" %}
-
-{% block title %}INTRUDEX{% endblock %}
-
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}INTRUDEX{% endblock %}</title>
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 <body class="min-h-screen flex items-center justify-center px-4">
 
   <div class="bg-white/5 backdrop-blur-lg border border-white/10 shadow-2xl rounded-2xl p-8 sm:p-10 w-full max-w-md text-white relative">
@@ -50,4 +52,3 @@
     </div>
   </div>
 </body>
-{% endblock %}

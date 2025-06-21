@@ -1,10 +1,18 @@
 {% extends "base.html" %}
 
+{% block head %}
+  <style>
+    body {
+      overflow: hidden !important;
+      height: 100vh !important;
+    }
+  </style>
+{% endblock %}
+
 {% block title %}500 - Server Error{% endblock %}
 
 {% block content %}
-
-<body class="flex flex-col items-center justify-center h-full text-center px-4">
+  <div class="flex flex-col items-center justify-center h-full text-center px-4 pt-38 mt-20">
   <h1 class="text-6xl font-bold text-red-500 mb-4">500</h1>
   <h2 class="text-2xl font-semibold mb-2">Internal Server Error</h2>
   <p class="text-gray-400 mb-6">Something went wrong on our end.</p>

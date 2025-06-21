@@ -52,7 +52,7 @@
    Global Styles
    ============================== */
 html {
-  @apply h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
+  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
@@ -61,6 +61,12 @@ body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
+
+html, body {
+  /*overflow: hidden;*/
+  height: 100%;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), sans-serif;
 }
@@ -256,3 +262,26 @@ html, body, * {
 .dashboard-widget-scroll {
   overflow-y: auto;
 }
+
+/* ==============================
+   Animations
+   ============================== */
+
+@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px);}
+            to { opacity: 1; transform: translateY(0);}
+         }
+         @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px);}
+            to { opacity: 1; transform: translateY(0);}
+         }
+         .fade-in {
+            animation: fadeIn 1s ease;
+         }
+         .slide-up {
+            animation: slideUp 1s ease;
+         }
+         .glow:hover {
+            box-shadow: 0 0 10px 2px #ef4444, 0 0 20px 4px #fff;
+            transition: box-shadow 0.3s;
+         }

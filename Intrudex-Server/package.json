@@ -42,11 +42,7 @@
   },
   "homepage": "https://github.com/ToolsHive/Intrudex#readme",
   "vendorCopy": [
-    {
-      "from": "node_modules/chart.js/dist/chart.js",
-      "to": "app/static/js/chart.min.js"
-    },
-    {
+     {
       "from": "node_modules/htmx.org/dist/htmx.min.js",
       "to": "app/static/js/htmx.min.js"
     },
