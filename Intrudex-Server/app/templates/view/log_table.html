@@ -1,0 +1,122 @@
+<div>
+  <table class="min-w-full bg-gray-900 rounded-xl shadow-lg">
+    <thead>
+      <tr class="text-gray-400 border-b border-gray-700">
+        <th class="py-2 px-3">Time</th>
+        <th class="py-2 px-3">Event ID</th>
+        <th class="py-2 px-3">User/Computer</th>
+        <th class="py-2 px-3">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr class="border-b border-gray-800 hover:bg-gray-800 transition cursor-pointer log-row"
+          data-detail-url="/view/{{ log_type }}/{{ log.id }}">
+        <td class="py-2 px-3 text-gray-400">{{ log.time_created }}</td>
+        <td class="py-2 px-3 text-blue-300">{{ log.event_id }}</td>
+        <td class="py-2 px-3 text-green-300">
+          {% if log_type == 'system' %}{{ log.computer }}
+          {% else %}{{ log.user or log.subject_user_name or log.computer or '' }}{% endif %}
+        </td>
+        <td class="py-2 px-3 flex items-center gap-2">
+          <button class="ml-2 px-2 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition"
+            onclick="event.stopPropagation(); fetch('{{ '/view/' ~ log_type ~ '/' ~ log.id }}').then(r => r.text()).then(html => {
+              let modal = document.getElementById('view-modal');
+              if (modal && modal.__x && modal.__x.$data) {
+                modal.__x.$data.content = html;
+                modal.__x.$data.open = true;
+              } else {
+                modal.style.display = 'flex';
+                modal.querySelector('[x-html=\"content\"]').innerHTML = html;
+              }
+            });">
+            View Details
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Server-side Pagination -->
+  <div class="flex items-center justify-between mt-4 px-2">
+    <div class="flex items-center gap-2">
+      <!-- Previous Page -->
+      <button
+        class="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed
+        {{ 'bg-blue-600 hover:bg-blue-700 text-white' if pagination.has_prev else 'bg-gray-700 text-gray-400' }}"
+        {% if not pagination.has_prev %}disabled{% endif %}
+        hx-get="/view/{{ log_type }}?page={{ pagination.prev_num }}"
+        hx-target="#log-table"
+        hx-push-url="true">
+        <i class="fas fa-chevron-left mr-1"></i> Previous
+      </button>
+
+      <!-- Page Numbers -->
+      <div class="hidden md:flex items-center gap-1">
+        {% set page_numbers = [] %}
+        {% if pagination.pages <= 7 %}
+          {% for i in range(1, pagination.pages + 1) %}
+            {% set _ = page_numbers.append(i) %}
+          {% endfor %}
+        {% else %}
+          {% if pagination.page <= 3 %}
+            {% for i in range(1, 6) %}
+              {% set _ = page_numbers.append(i) %}
+            {% endfor %}
+            {% set _ = page_numbers.append('...') %}
+            {% set _ = page_numbers.append(pagination.pages) %}
+          {% elif pagination.page >= pagination.pages - 2 %}
+            {% set _ = page_numbers.append(1) %}
+            {% set _ = page_numbers.append('...') %}
+            {% for i in range(pagination.pages - 4, pagination.pages + 1) %}
+              {% set _ = page_numbers.append(i) %}
+            {% endfor %}
+          {% else %}
+            {% set _ = page_numbers.append(1) %}
+            {% set _ = page_numbers.append('...') %}
+            {% for i in range(pagination.page - 1, pagination.page + 2) %}
+              {% set _ = page_numbers.append(i) %}
+            {% endfor %}
+            {% set _ = page_numbers.append('...') %}
+            {% set _ = page_numbers.append(pagination.pages) %}
+          {% endif %}
+        {% endif %}
+        {% for page in page_numbers %}
+          {% if page == '...' %}
+            <span class="px-3 py-1 text-gray-400">...</span>
+          {% else %}
+            <button
+              class="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200
+              {{ 'bg-blue-600 text-white' if page == pagination.page else 'text-gray-400 hover:bg-gray-800' }}"
+              {% if page == pagination.page %}disabled{% endif %}
+              hx-get="/view/{{ log_type }}?page={{ page }}"
+              hx-target="#log-table"
+              hx-push-url="true">
+              {{ page }}
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Next Page -->
+      <button
+        class="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed
+        {{ 'bg-blue-600 hover:bg-blue-700 text-white' if pagination.has_next else 'bg-gray-700 text-gray-400' }}"
+        {% if not pagination.has_next %}disabled{% endif %}
+        hx-get="/view/{{ log_type }}?page={{ pagination.next_num }}"
+        hx-target="#log-table"
+        hx-push-url="true">
+        Next <i class="fas fa-chevron-right ml-1"></i>
+      </button>
+    </div>
+
+    <!-- Page Info -->
+    <div class="text-sm text-gray-400">
+      <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+      <span class="ml-2">({{ (pagination.page - 1) * pagination.per_page + 1 }}-{{ (pagination.page - 1) * pagination.per_page + logs|length }} of {{ pagination.total }})</span>
+    </div>
+  </div>
+</div>
