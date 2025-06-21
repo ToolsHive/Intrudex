@@ -1,6 +1,7 @@
 import re
 from app.db import db
 from sqlalchemy import func
+from itertools import chain
 from datetime import datetime
 from rich.pretty import Pretty
 from rich.syntax import Syntax
@@ -245,21 +246,149 @@ def get_log_counts():
 
 @logs_bp.route('/recent', methods=['GET'])
 def get_recent_logs():
-    limit = int(request.args.get('limit', 10))
-    logs = SystemLog.query.order_by(SystemLog.time_created.desc()).limit(limit).all()
+    total_limit = int(request.args.get('limit', 10))
+    table_count = 4
+    per_table = total_limit // table_count
+    remainder = total_limit % table_count
+
+    # Distribute the remainder to the first few tables
+    per_table_limits = [per_table + (1 if i < remainder else 0) for i in range(table_count)]
+
+    # Helper functions
+    def get_user_field(log):
+        if isinstance(log, SystemLog):
+            return getattr(log, "computer", "")
+        elif isinstance(log, SysmonLog):
+            return getattr(log, "user", "")
+        elif isinstance(log, ApplicationLog):
+            return getattr(log, "user", "")
+        elif isinstance(log, SecurityLog):
+            return getattr(log, "subject_user_name", "") or getattr(log, "user", "")
+        return ""
+
+    def get_event_id(log):
+        return getattr(log, "event_id", "")
+
+    def get_details_field(log):
+        if isinstance(log, SystemLog):
+            return getattr(log, "provider_name", "") or getattr(log, "event_data", "")
+        elif isinstance(log, SysmonLog):
+            return getattr(log, "image", "") or getattr(log, "company", "")
+        elif isinstance(log, ApplicationLog):
+            return getattr(log, "target_object", "") or getattr(log, "details", "")
+        elif isinstance(log, SecurityLog):
+            return getattr(log, "subject_user_name", "") or getattr(log, "target_user_name", "")
+        return ""
+
+    def is_valid(log):
+        user = get_user_field(log)
+        event_id = get_event_id(log)
+        details = get_details_field(log)
+        def is_unknown(val):
+            return not val or str(val).strip().lower() == "unknown"
+        return not (is_unknown(user) or is_unknown(event_id) or is_unknown(details))
+
+    # Fetch more than needed, filter, and then trim
+    sysmon_logs = [log for log in SysmonLog.query.order_by(SysmonLog.time_created.desc()).limit(per_table_limits[0]*10).all() if is_valid(log)]
+    app_logs = [log for log in ApplicationLog.query.order_by(ApplicationLog.time_created.desc()).limit(per_table_limits[1]*10).all() if is_valid(log)]
+    security_logs = [log for log in SecurityLog.query.order_by(SecurityLog.time_created.desc()).limit(per_table_limits[2]*10).all() if is_valid(log)]
+    system_logs = [log for log in SystemLog.query.order_by(SystemLog.time_created.desc()).limit(per_table_limits[3]*10).all() if is_valid(log)]
+
+    # Take up to per_table_limits from each, but not more than available
+    sysmon_logs = sysmon_logs[:per_table_limits[0]]
+    app_logs = app_logs[:per_table_limits[1]]
+    security_logs = security_logs[:per_table_limits[2]]
+    system_logs = system_logs[:per_table_limits[3]]
+
+    # If we have less than total_limit, fill from remaining logs from all tables (prioritize missing types)
+    all_logs = sysmon_logs + app_logs + security_logs + system_logs
+    used_ids = set((type(log).__name__, log.id) for log in all_logs)
+    if len(all_logs) < total_limit:
+        # Gather remaining valid logs from all tables, excluding already used logs, and try to balance types
+        extra_logs = []
+        log_sources = [
+            [l for l in SysmonLog.query.order_by(SysmonLog.time_created.desc()).all() if is_valid(l)],
+            [l for l in ApplicationLog.query.order_by(ApplicationLog.time_created.desc()).all() if is_valid(l)],
+            [l for l in SecurityLog.query.order_by(SecurityLog.time_created.desc()).all() if is_valid(l)],
+            [l for l in SystemLog.query.order_by(SystemLog.time_created.desc()).all() if is_valid(l)],
+        ]
+        # Interleave logs from each type to fill up to total_limit
+        pointers = [0, 0, 0, 0]
+        while len(all_logs) + len(extra_logs) < total_limit:
+            added = False
+            for idx, logs in enumerate(log_sources):
+                while pointers[idx] < len(logs):
+                    log = logs[pointers[idx]]
+                    pointers[idx] += 1
+                    unique_id = (type(log).__name__, log.id)
+                    if unique_id not in used_ids:
+                        extra_logs.append(log)
+                        used_ids.add(unique_id)
+                        added = True
+                        break
+            if not added:
+                break  # No more logs to add
+        all_logs += extra_logs
+
+    # Sort by time_created descending and trim to total_limit
+    all_logs = sorted(all_logs, key=lambda log: log.time_created or datetime.min, reverse=True)[:total_limit]
+
+    def log_detail(log):
+        if isinstance(log, SystemLog):
+            return f"Provider: {log.provider_name or ''}, EventRecordID: {getattr(log, 'event_record_id', '')}"
+        elif isinstance(log, SysmonLog):
+            return f"Image: {getattr(log, 'image', '')}, Company: {getattr(log, 'company', '')}"
+        elif isinstance(log, ApplicationLog):
+            return f"Target: {getattr(log, 'target_object', '')}, Details: {getattr(log, 'details', '')}"
+        elif isinstance(log, SecurityLog):
+            return f"Subject: {getattr(log, 'subject_user_name', '')}, Target: {getattr(log, 'target_user_name', '')}"
+        return ""
+
     rows = []
-    for log in logs:
-        # Show a button for details, not the raw/truncated string
+    for log in all_logs:
+        if isinstance(log, SystemLog):
+            log_type = "System"
+            badge = "badge-system"
+            view_func = f"showSystemLogDetail({log.id})"
+            event_id = getattr(log, "event_id", "")
+            user = getattr(log, "computer", "")
+        elif isinstance(log, SysmonLog):
+            log_type = "Sysmon"
+            badge = "badge-sysmon"
+            view_func = f"showSysmonLogDetail({log.id})"
+            event_id = getattr(log, "event_id", "")
+            user = getattr(log, "user", "")
+        elif isinstance(log, ApplicationLog):
+            log_type = "Application"
+            badge = "badge-application"
+            view_func = f"showApplicationLogDetail({log.id})"
+            event_id = getattr(log, "event_id", "")
+            user = getattr(log, "user", "")
+        elif isinstance(log, SecurityLog):
+            log_type = "Security"
+            badge = "badge-security"
+            view_func = f"showSecurityLogDetail({log.id})"
+            event_id = getattr(log, "event_id", "")
+            user = getattr(log, "subject_user_name", "") or getattr(log, "user", "")
+        else:
+            log_type = "Unknown"
+            badge = ""
+            view_func = "#"
+            event_id = ""
+            user = ""
+
+        detail = log_detail(log)
         rows.append(f"""
-        <tr class="border-b border-gray-800 hover:bg-gray-800 transition cursor-pointer" data-log-id="{log.id}">
+        <tr class="border-b border-gray-800 hover:bg-gray-800 transition cursor-pointer" data-log-id="{log.id}" data-log-type="{log_type}">
             <td class="py-2 px-3">
-                <span class="badge badge-system">System</span>
+                <span class="badge {badge}">{log_type}</span>
             </td>
             <td class="py-2 px-3 text-gray-400">{log.time_created.strftime('%Y-%m-%d %H:%M:%S') if log.time_created else ''}</td>
-            <td class="py-2 px-3 text-blue-300">#{log.event_id}</td>
-            <td class="py-2 px-3 text-green-300">{log.computer}</td>
+            <td class="py-2 px-3 text-blue-300">#{event_id}</td>
+            <td class="py-2 px-3 text-green-300">{user}</td>
+            <td class="py-2 px-3 text-gray-200">{detail}</td>
             <td class="py-2 px-3">
-                <button class="px-3 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition" onclick="event.stopPropagation(); showSystemLogDetail({log.id});">View</button>
+                <button class="px-3 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition" onclick="event.stopPropagation(); {view_func};">View</button>
             </td>
         </tr>
         """)
@@ -292,38 +421,196 @@ def get_system_log_detail(log_id):
     """
     return html
 
+@logs_bp.route('/sysmon/<int:log_id>', methods=['GET'])
+def get_sysmon_log_detail(log_id):
+    log = SysmonLog.query.get_or_404(log_id)
+    html = f"""
+    <div class="modal-title">Sysmon Log Details</div>
+    <div class="modal-row"><span class="modal-label">Event ID:</span> {log.event_id}</div>
+    <div class="modal-row"><span class="modal-label">Time:</span> {log.time_created}</div>
+    <div class="modal-row"><span class="modal-label">User:</span> {log.user or ''}</div>
+    <div class="modal-row"><span class="modal-label">Image:</span> {log.image or ''}</div>
+    <div class="modal-row"><span class="modal-label">Company:</span> {log.company or ''}</div>
+    <div class="modal-row"><span class="modal-label">Hashes:</span> {log.hashes or ''}</div>
+    <div class="modal-row"><span class="modal-label">Signed:</span> {log.signed}</div>
+    """
+    return html
+
+@logs_bp.route('/application/<int:log_id>', methods=['GET'])
+def get_application_log_detail(log_id):
+    log = ApplicationLog.query.get_or_404(log_id)
+    html = f"""
+    <div class="modal-title">Application Log Details</div>
+    <div class="modal-row"><span class="modal-label">Event ID:</span> {log.event_id}</div>
+    <div class="modal-row"><span class="modal-label">Time:</span> {log.time_created}</div>
+    <div class="modal-row"><span class="modal-label">User:</span> {log.user or ''}</div>
+    <div class="modal-row"><span class="modal-label">Target Object:</span> {log.target_object or ''}</div>
+    <div class="modal-row"><span class="modal-label">Details:</span> {log.details or ''}</div>
+    <div class="modal-row"><span class="modal-label">Event Type:</span> {log.event_type or ''}</div>
+    """
+    return html
+
+@logs_bp.route('/security/<int:log_id>', methods=['GET'])
+def get_security_log_detail(log_id):
+    log = SecurityLog.query.get_or_404(log_id)
+    html = f"""
+    <div class="modal-title">Security Log Details</div>
+    <div class="modal-row"><span class="modal-label">Event ID:</span> {log.event_id}</div>
+    <div class="modal-row"><span class="modal-label">Time:</span> {log.time_created}</div>
+    <div class="modal-row"><span class="modal-label">Computer:</span> {log.computer or ''}</div>
+    <div class="modal-row"><span class="modal-label">Subject User:</span> {log.subject_user_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Target User:</span> {log.target_user_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Domain:</span> {log.subject_domain_name or ''}</div>
+    <div class="modal-row"><span class="modal-label">Caller Process:</span> {log.caller_process_name or ''}</div>
+    """
+    return html
+
 @logs_bp.route('/top-users', methods=['GET'])
 def get_top_users():
+    # Aggregate users from all log tables
     sysmon_users = db.session.query(SysmonLog.user, func.count().label('count')).group_by(SysmonLog.user)
     app_users = db.session.query(ApplicationLog.user, func.count().label('count')).group_by(ApplicationLog.user)
-    user_counts = {}
-    for user, count in sysmon_users.union_all(app_users):
-        if user:
-            user_counts[user] = user_counts.get(user, 0) + count
-    top = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    sec_users = db.session.query(SecurityLog.subject_user_name, func.count().label('count')).group_by(SecurityLog.subject_user_name)
+    sys_users = db.session.query(SystemLog.computer, func.count().label('count')).group_by(SystemLog.computer)
+
+    user_stats = {}
+
+    # Helper to add counts
+    def add_count(user, log_type, count):
+        if not user or str(user).strip().lower() == "unknown":
+            return
+        if user not in user_stats:
+            user_stats[user] = {"total": 0, "Sysmon": 0, "Application": 0, "Security": 0, "System": 0}
+        user_stats[user][log_type] += count
+        user_stats[user]["total"] += count
+
+    for user, count in sysmon_users:
+        add_count(user, "Sysmon", count)
+    for user, count in app_users:
+        add_count(user, "Application", count)
+    for user, count in sec_users:
+        add_count(user, "Security", count)
+    for user, count in sys_users:
+        add_count(user, "System", count)
+
+    # Sort by total count
+    sorted_users = sorted(user_stats.items(), key=lambda x: x[1]["total"], reverse=True)
+
+    # Only include users that actually have logs in at least one table
+    filtered_users = []
+    for user, stats in sorted_users:
+        # Check if user has at least one log in any table
+        has_logs = False
+        if SysmonLog.query.filter(SysmonLog.user == user).first():
+            has_logs = True
+        elif ApplicationLog.query.filter(ApplicationLog.user == user).first():
+            has_logs = True
+        elif SecurityLog.query.filter(SecurityLog.subject_user_name == user).first():
+            has_logs = True
+        elif SystemLog.query.filter(SystemLog.computer == user).first():
+            has_logs = True
+        if has_logs:
+            filtered_users.append((user, stats))
+        if len(filtered_users) >= 10:
+            break
+
     items = []
-    for user, count in top:
-        initials = ''.join([w[0] for w in user.split() if w]).upper()[:2]
+    for user, stats in filtered_users:
+        initials = ''.join([w[0] for w in user.split() if w]).upper()[:2] or user[:2].upper()
+        breakdown = []
+        for log_type in ["Sysmon", "Application", "Security", "System"]:
+            if stats[log_type]:
+                color = {
+                    "Sysmon": "bg-blue-700",
+                    "Application": "bg-green-700",
+                    "Security": "bg-purple-700",
+                    "System": "bg-red-700"
+                }[log_type]
+                breakdown.append(
+                    f"<span class='px-2 py-0.5 rounded {color} text-white text-xs mr-1'>{log_type}: {stats[log_type]}</span>"
+                )
         items.append(f"""
         <li class="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-2 shadow hover-raise cursor-pointer" data-user="{user}">
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white font-bold text-lg">{initials}</span>
-            <span class="flex-1 truncate" title="{user}">{user}</span>
-            <span class="badge badge-system">{count} logs</span>
+            <div class="flex-1 min-w-0">
+                <div class="font-semibold truncate" title="{user}">{user}</div>
+                <div class="flex flex-wrap mt-1">{''.join(breakdown)}</div>
+            </div>
+            <span class="badge badge-system">{stats['total']} logs</span>
         </li>
         """)
     return render_template_string('<ul id="top-users" class="space-y-3">\n' + '\n'.join(items) + '\n</ul>')
 
 @logs_bp.route('/user/<user>', methods=['GET'])
 def get_user_detail(user):
-    sysmon = SysmonLog.query.filter(SysmonLog.user == user).order_by(SysmonLog.time_created.desc()).limit(5).all()
-    app = ApplicationLog.query.filter(ApplicationLog.user == user).order_by(ApplicationLog.time_created.desc()).limit(5).all()
-    html = f"<div class='modal-title'>User: {user}</div>"
-    html += "<div class='modal-row'><b>Recent Sysmon Logs:</b></div>"
+    # Fetch recent logs for this user from all log types, ensuring uniqueness by event_id, time_created, and log_type
+    sysmon = SysmonLog.query.filter(SysmonLog.user == user).order_by(SysmonLog.time_created.desc()).limit(20).all()
+    app = ApplicationLog.query.filter(ApplicationLog.user == user).order_by(ApplicationLog.time_created.desc()).limit(20).all()
+    sec = SecurityLog.query.filter(SecurityLog.subject_user_name == user).order_by(SecurityLog.time_created.desc()).limit(20).all()
+    sys = SystemLog.query.filter(SystemLog.computer == user).order_by(SystemLog.time_created.desc()).limit(20).all()
+
+    # Use a set of (log_type, event_id, time_created, extra_key) to ensure uniqueness
+    seen = set()
+    logs_by_type = {'Sysmon': [], 'Application': [], 'Security': [], 'System': []}
+
+    def unique_key(log, log_type):
+        # Use event_id, time_created, and a distinguishing field for each log type
+        if log_type == "Sysmon":
+            extra = getattr(log, "image", None)
+        elif log_type == "Application":
+            extra = getattr(log, "target_object", None)
+        elif log_type == "Security":
+            extra = getattr(log, "target_user_name", None)
+        elif log_type == "System":
+            extra = getattr(log, "provider_name", None)
+        else:
+            extra = None
+        return (log_type, getattr(log, "event_id", None), getattr(log, "time_created", None), extra)
+
     for log in sysmon:
-        html += f"<div class='modal-row'><span class='modal-label'>Event:</span> {log.event_id} <span class='modal-label'>Time:</span> {log.time_created} <span class='modal-label'>Image:</span> {log.image}</div>"
-    html += "<div class='modal-row'><b>Recent Application Logs:</b></div>"
+        k = unique_key(log, "Sysmon")
+        if k not in seen:
+            logs_by_type["Sysmon"].append(log)
+            seen.add(k)
     for log in app:
-        html += f"<div class='modal-row'><span class='modal-label'>Event:</span> {log.event_id} <span class='modal-label'>Time:</span> {log.time_created} <span class='modal-label'>Image:</span> {log.image}</div>"
+        k = unique_key(log, "Application")
+        if k not in seen:
+            logs_by_type["Application"].append(log)
+            seen.add(k)
+    for log in sec:
+        k = unique_key(log, "Security")
+        if k not in seen:
+            logs_by_type["Security"].append(log)
+            seen.add(k)
+    for log in sys:
+        k = unique_key(log, "System")
+        if k not in seen:
+            logs_by_type["System"].append(log)
+            seen.add(k)
+
+    html = f"<div class='modal-title'>User: {user}</div>"
+
+    def log_row(log, log_type):
+        if log_type == "Sysmon":
+            return f"<div class='modal-row'><span class='modal-label'>[Sysmon]</span> Event: {log.event_id} | Time: {log.time_created} | Image: {log.image or ''} | Company: {log.company or ''}</div>"
+        elif log_type == "Application":
+            return f"<div class='modal-row'><span class='modal-label'>[Application]</span> Event: {log.event_id} | Time: {log.time_created} | Target: {log.target_object or ''} | Details: {log.details or ''}</div>"
+        elif log_type == "Security":
+            return f"<div class='modal-row'><span class='modal-label'>[Security]</span> Event: {log.event_id} | Time: {log.time_created} | Target User: {log.target_user_name or ''} | Domain: {log.subject_domain_name or ''}</div>"
+        elif log_type == "System":
+            return f"<div class='modal-row'><span class='modal-label'>[System]</span> Event: {log.event_id} | Time: {log.time_created} | Provider: {log.provider_name or ''}</div>"
+        return ""
+
+    has_any = False
+    for log_type in ["Sysmon", "Application", "Security", "System"]:
+        logs = logs_by_type[log_type]
+        if logs:
+            has_any = True
+            html += f"<div class='modal-row'><b>Recent {log_type} Logs:</b></div>"
+            for log in logs[:5]:
+                html += log_row(log, log_type)
+    if not has_any:
+        html += "<div class='modal-row text-gray-400'>No logs found for this user.</div>"
     return html
 
 @logs_bp.route('/alerts', methods=['GET'])
@@ -332,23 +619,46 @@ def get_recent_alerts():
     items = []
     for log in logs:
         user = log.subject_user_name or "Unknown"
+        target_user = log.target_user_name or "Unknown"
+        domain = log.subject_domain_name or "Unknown"
+        computer = log.computer or "Unknown"
+        event_id = log.event_id or ""
+        time_str = log.time_created.strftime('%Y-%m-%d %H:%M:%S') if log.time_created else ""
+        details_preview = ""
+        # Compose a short preview from available fields
+        if hasattr(log, "caller_process_name") and log.caller_process_name:
+            details_preview += f"Process: <span class='text-blue-300'>{log.caller_process_name}</span> "
+        if hasattr(log, "target_domain_name") and log.target_domain_name:
+            details_preview += f"Target Domain: <span class='text-blue-300'>{log.target_domain_name}</span> "
+        if hasattr(log, "target_sid") and log.target_sid:
+            details_preview += f"Target SID: <span class='text-blue-300'>{log.target_sid}</span> "
+        if not details_preview:
+            details_preview = "<span class='text-gray-400'>No extra details</span>"
+
         items.append(f"""
-        <li class="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-2 shadow hover-raise cursor-pointer" data-alert-id="{log.id}">
-            <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-xl mr-2"></i>
-            <span class="flex-1 truncate" title="Security Event {log.event_id} on {log.computer} by {user}">
-                <span class="text-yellow-300 font-semibold">Event {log.event_id}</span>
-                <span class="text-gray-300">on</span>
-                <span class="text-blue-300">{log.computer}</span>
-                <span class="text-gray-300">by</span>
-                <span class="text-green-300">{user}</span>
-            </span>
-            <span class="text-xs text-gray-400">{log.time_created.strftime('%H:%M:%S')}</span>
+        <li class="flex flex-col gap-1 bg-gray-800 rounded-lg px-4 py-3 shadow hover-raise cursor-pointer" data-alert-id="{log.id}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-xl"></i>
+              <span class="text-yellow-300 font-semibold">Event {event_id}</span>
+              <span class="text-gray-400 text-xs ml-2">{time_str}</span>
+            </div>
+            <button class="ml-2 px-2 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition"
+              onclick="event.stopPropagation(); showSecurityLogDetail({log.id});">View</button>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm">
+            <span class="text-gray-300">Computer: <span class="text-blue-300">{computer}</span></span>
+            <span class="text-gray-300">Subject: <span class="text-green-300">{user}</span></span>
+            <span class="text-gray-300">Target: <span class="text-green-200">{target_user}</span></span>
+            <span class="text-gray-300">Domain: <span class="text-purple-300">{domain}</span></span>
+          </div>
+          <div class="mt-1 text-xs text-gray-400">{details_preview}</div>
         </li>
         """)
     return render_template_string('<ul id="recent-alerts" class="space-y-3">\n' + '\n'.join(items) + '\n</ul>')
 
-@logs_bp.route('/security/<int:alert_id>', methods=['GET'])
-def get_security_log_detail(alert_id):
+@logs_bp.route('/security/alert/<int:alert_id>', methods=['GET'])
+def get_security_alert_detail(alert_id):
     log = SecurityLog.query.get_or_404(alert_id)
     html = f"""
     <div class="modal-title">Security Alert Details</div>

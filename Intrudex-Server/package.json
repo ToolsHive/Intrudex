@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
+    "alpinejs": "^3.14.9",
     "chart.js": "^4.5.0",
     "htmx.org": "^1.9.12",
     "sweetalert2": "^11.6.13"
@@ -42,7 +43,7 @@
   },
   "homepage": "https://github.com/ToolsHive/Intrudex#readme",
   "vendorCopy": [
-     {
+    {
       "from": "node_modules/htmx.org/dist/htmx.min.js",
       "to": "app/static/js/htmx.min.js"
     },
@@ -61,6 +62,10 @@
     {
       "from": "node_modules/chart.js/dist/chart.umd.js",
       "to": "app/static/js/chart.umd.js"
+    },
+    {
+      "from": "node_modules/alpinejs/dist/cdn.min.js",
+      "to": "app/static/js/alpine.min.js"
     }
   ]
 }

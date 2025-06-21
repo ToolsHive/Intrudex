@@ -7,31 +7,93 @@
       <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
       <link href="{{ url_for('static', filename='css/fontawesome.min.css') }}" rel="stylesheet">
       <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
-
+      <script defer src="{{ url_for('static', filename='js/alpine.min.js') }}"></script>
       {% block head %}{% endblock %}
    </head>
-   <body class=" min-h-screen">
+   <body class="min-h-screen" x-data="{ sidebarOpen: false }">
+      <!-- Sidebar Drawer -->
+      <div
+         class="fixed inset-0 z-40 flex"
+         x-show="sidebarOpen"
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="display: none;"
+         @click.away="sidebarOpen = false"
+         @keydown.escape.window="sidebarOpen = false"
+         >
+         <!-- Overlay -->
+         <div class="fixed inset-0 bg-transparent backdrop-grayscale-55 bg-opacity-40" aria-hidden="true"></div>
+         <!-- Sidebar -->
+         <aside
+  class="relative w-64 bg-gradient-to-b from-gray-800 via-gray-900 to-black text-white h-full shadow-2xl z-50 flex flex-col"
+  x-show="sidebarOpen"
+  x-transition:enter="transition ease-in-out duration-300 transform"
+  x-transition:enter-start="-translate-x-full"
+  x-transition:enter-end="translate-x-0"
+  x-transition:leave="transition ease-in-out duration-300 transform"
+  x-transition:leave-start="translate-x-0"
+  x-transition:leave-end="-translate-x-full"
+  style="display: none;"
+>
+  <div class="flex items-center justify-between px-4 py-4 border-b border-gray-700">
+    <span class="text-lg font-bold tracking-wide">Menu</span>
+    <button @click="sidebarOpen = false" class="text-gray-400 hover:text-white focus:outline-none transition-colors duration-200">
+      <i class="fas fa-times text-xl"></i>
+    </button>
+  </div>
+  <nav class="mt-4 px-4 flex-1">
+    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="#" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+      <i class="fas fa-user"></i> Profile
+    </a>
+    <a href="#" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+      <i class="fas fa-cogs"></i> Settings
+    </a>
+    <a href="#" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+      <i class="fas fa-info-circle"></i> About
+    </a>
+    <!-- Add more links as needed -->
+  </nav>
+  <div class="px-4 py-4 border-t border-gray-700">
+    <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-all duration-200 w-full justify-center shadow-lg">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+  </div>
+</aside>
+      </div>
       <!-- Header -->
-      <header class="bg-gray-900 shadow fade-in w-full fixed top-0 left-0 z-50">
+      <header class="bg-gray-900 shadow fade-in w-full fixed top-0 left-0 z-30">
          <div class="max-w-7xl mx-auto py-4 px-4 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold tracking-tight text-white transition-transform duration-500 hover:scale-105">🔒 INTRUDEX </h1>
+            <div class="flex items-center gap-4">
+               <!-- Sidebar Toggle Button -->
+               <button @click="sidebarOpen = true" class="text-white focus:outline-none mr-2">
+               <i class="fas fa-bars text-2xl"></i>
+               </button>
+               <h1 class="text-3xl font-extrabold tracking-tight text-white transition-transform duration-500 hover:scale-105">🔒 INTRUDEX </h1>
+            </div>
             <span class="text-gray-400 text-sm">Last updated: <span id="last-updated"></span></span>
          </div>
       </header>
-      <main class="mt-18 slide-up">
+      <main class="my-18 slide-up pb-15">
          {% block content %}{% endblock %}
       </main>
       <!-- Footer -->
       <footer class="fixed bottom-0 left-0 w-full bg-gray-900 shadow fade-in">
          <div class="max-w-7xl mx-auto py-6 px-4 flex justify-between items-center">
-            <span class="text-gray-400 text-sm">&copy; 2025 INTRUDEX. All rights reserved.</span>
+            <span class="text-gray-400 text-sm">&copy; 2025 INTRUDEX. All rights reserved</span>
             <span class="text-gray-400 text-sm">
-               <a href="https://github.com/ToolsHive/Intrudex" target="_blank" rel="noopener" class="transition-colors duration-300 hover:text-red-500 glow">
-                  <i class="fab fa-github"></i> Intrudex
-               </a>
+            <a href="https://github.com/ToolsHive/Intrudex" target="_blank" rel="noopener" class="transition-colors duration-300 hover:text-red-500 glow">
+            <i class="fab fa-github"></i> Intrudex
+            </a>
             </span>
          </div>
       </footer>
-     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/script.js') }}"></script>
    </body>
 </html>

@@ -117,9 +117,16 @@
     let tr = e.target.closest('tr[data-log-id]');
     if (tr && !e.target.closest('button')) {
       let logId = tr.getAttribute('data-log-id');
-      let res = await fetch(`/api/logs/system/${logId}`);
-      let html = await res.text();
-      showModal(html);
+      let logType = tr.getAttribute('data-log-type');
+      if (logType === "System") {
+        await showSystemLogDetail(logId);
+      } else if (logType === "Sysmon") {
+        await showSysmonLogDetail(logId);
+      } else if (logType === "Application") {
+        await showApplicationLogDetail(logId);
+      } else if (logType === "Security") {
+        await showSecurityLogDetail(logId);
+      }
       return;
     }
     // Top user
@@ -142,9 +149,29 @@
     }
   });
 
-  // Add this function for the "View" button in details
+  // Add these functions for the "View" button in details
   async function showSystemLogDetail(logId) {
     let res = await fetch(`/api/logs/system/${logId}`);
+    let html = await res.text();
+    showModal(html);
+  }
+  async function showSysmonLogDetail(logId) {
+    let res = await fetch(`/api/logs/sysmon/${logId}`);
+    let html = await res.text();
+    showModal(html);
+  }
+  async function showApplicationLogDetail(logId) {
+    let res = await fetch(`/api/logs/application/${logId}`);
+    let html = await res.text();
+    showModal(html);
+  }
+  async function showSecurityLogDetail(logId) {
+    let res = await fetch(`/api/logs/security/${logId}`);
+    let html = await res.text();
+    showModal(html);
+  }
+  async function showUserDetail(user) {
+    let res = await fetch(`/api/logs/user/${encodeURIComponent(user)}`);
     let html = await res.text();
     showModal(html);
   }
