@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/prism-tomorrow.min.css') }}" rel="stylesheet"/>
+<script src="{{ url_for('static', filename='js/prism.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prism-yaml.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/clipboard.min.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="w-full px-0 mt-10 animate-slide-in">
+   <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-4">
+      <nav class="flex items-center text-sm text-gray-400 flex-wrap breadcrumbs">
+         <a href="{{ url_for('sigma.sigma_index') }}" class="text-blue-400 hover:text-yellow-400 font-semibold transition underline-offset-2 hover:underline">Sigma Rules</a>
+         {% set parts = rule_path.split('/') %}
+         {% set path = '' %}
+         {% for part in parts %}
+         <span class="mx-2 text-gray-500">/</span>
+         {% set path = path + '/' + part if path else part %}
+         {% if not loop.last %}
+         <span class="text-yellow-300">{{ part }}</span>
+         {% else %}
+         <span class="text-yellow-400 font-bold">{{ part }}</span>
+         {% endif %}
+         {% endfor %}
+      </nav>
+      <div class="flex gap-2">
+         <a href="{{ url_for('sigma.sigma_index') }}" class="inline-flex items-center text-gray-200 hover:text-yellow-400 font-semibold transition px-4 py-2 rounded-lg bg-gray-800/80 shadow border border-yellow-400/40 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Sigma Rules
+         </a>
+         <button id="copy-btn" data-clipboard-target="#rule-content code" class="inline-flex items-center text-gray-200 hover:text-yellow-400 font-semibold transition px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-400/20 to-gray-800/80 shadow border border-yellow-400/40 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H9a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span id="copy-btn-label">Copy Rule</span>
+         </button>
+      </div>
+   </div>
+   <pre id="rule-content" tabindex="0" class="text-green-200 p-4 rounded-xl overflow-x-auto text-sm font-mono shadow-inner border border-gray-800 whitespace-pre-wrap focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all duration-200 w-full animate-slide-in" style="margin-left:0;margin-right:0;background:transparent;"><code class="language-yaml">{{ content }}</code></pre>
+</div>
+<div id="copy-toast">Copied to clipboard!</div>
+<script src="{{ url_for('static', filename='js/sigma.js') }}"></script>
+{% endblock %}

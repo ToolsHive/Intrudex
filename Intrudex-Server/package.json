@@ -15,7 +15,10 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "alpinejs": "^3.14.9",
     "chart.js": "^4.5.0",
+    "clipboard": "^2.0.11",
+    "fuse.js": "^7.1.0",
     "htmx.org": "^1.9.12",
+    "prismjs": "^1.30.0",
     "sweetalert2": "^11.6.13"
   },
   "devDependencies": {
@@ -66,6 +69,26 @@
     {
       "from": "node_modules/alpinejs/dist/cdn.min.js",
       "to": "app/static/js/alpine.min.js"
+    },
+    {
+      "from": "node_modules/fuse.js/dist/fuse.min.js",
+      "to": "app/static/js/fuse.min.js"
+    },
+    {
+      "from": "node_modules/prismjs/prism.js",
+      "to": "app/static/js/prism.js"
+    },
+    {
+      "from": "node_modules/prismjs/components/prism-yaml.min.js",
+      "to": "app/static/js/prism-yaml.min.js"
+    },
+    {
+      "from": "node_modules/prismjs/themes/prism-tomorrow.min.css",
+      "to": "app/static/css/prism-tomorrow.min.css"
+    },
+    {
+      "from": "node_modules/clipboard/dist/clipboard.min.js",
+      "to": "app/static/js/clipboard.min.js"
     }
   ]
 }

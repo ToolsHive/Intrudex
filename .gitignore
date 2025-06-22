@@ -590,5 +590,10 @@ chart.umd.js
 htmx.min.js
 sweetalert2.min.js
 alpine.min.js
+fuse.min.js
+prism.js
+prism-yaml.min.js
+clipboard.min.js
 
 fontawesome.min.css
+prism-tomorrow.min.css

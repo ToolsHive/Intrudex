@@ -285,3 +285,90 @@ html, body, * {
             box-shadow: 0 0 10px 2px #ef4444, 0 0 20px 4px #fff;
             transition: box-shadow 0.3s;
          }
+
+/* ==============================
+   Misc
+   ============================== */
+#copy-toast {
+  display: none;
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  background: #fde68a;
+  color: #92400e;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 16px 0 #0002;
+  animation: fade-in 0.3s;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-slide-in {
+  animation: slide-in 0.7s cubic-bezier(.4,0,.2,1);
+}
+#rule-content::-webkit-scrollbar {
+  height: 8px;
+}
+#rule-content::-webkit-scrollbar-thumb {
+  background: #facc15;
+  border-radius: 6px;
+}
+#rule-content::-webkit-scrollbar-track {
+  background: #23272f;
+  border-radius: 6px;
+}
+#rule-content {
+  transition: box-shadow 0.3s, background 0.3s;
+  background: transparent !important;
+}
+#rule-content:focus-within, #rule-content:focus {
+  outline: none;
+}
+.breadcrumbs a, .breadcrumbs span {
+  transition: color 0.2s, background 0.2s;
+}
+.breadcrumbs a:hover {
+  color: #facc15 !important;
+  background: #23272f;
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+}
+.copy-btn-animate {
+  animation: pulse 0.7s;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 #fde68a88; }
+  70% { box-shadow: 0 0 0 10px #fde68a00; }
+  100% { box-shadow: 0 0 0 0 #fde68a00; }
+}
+
+.sigma-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #facc15 #23272f;
+}
+.sigma-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.sigma-scrollbar::-webkit-scrollbar-thumb {
+  background: #facc15;
+  border-radius: 6px;
+}
+.sigma-scrollbar::-webkit-scrollbar-track {
+  background: #23272f;
+  border-radius: 6px;
+}
+.sigma-highlight {
+  background: #fde68a;
+  color: #92400e;
+  border-radius: 0.25rem;
+  padding: 0 2px;
+  font-weight: bold;
+}
