@@ -1,0 +1,4 @@
+[submodule "Intrudex-Server/Sigma"]
+	path = Intrudex-Server/Sigma
+	url = https://github.com/ToolsHive/sigma.git
+	branch = Windows
