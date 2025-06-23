@@ -1,10 +1,13 @@
 import os
+import yaml
 import shutil
 import tempfile
-from flask import Blueprint, render_template, abort, request, send_file
+import ruamel.yaml
+from flask import Blueprint, render_template, abort, request, send_file, redirect, url_for, flash
 
 sigma_bp = Blueprint('sigma', __name__, url_prefix='/sigma')
 SIGMA_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Sigma'))
+CUSTOM_FOLDER = os.path.join(SIGMA_ROOT, 'Custom')
 
 def build_sigma_tree():
     """
@@ -99,3 +102,43 @@ def export_folder(folder_path):
     shutil.make_archive(zip_base, 'zip', safe_path)
     zip_path = zip_base + '.zip'
     return send_file(zip_path, as_attachment=True, download_name=f"{os.path.basename(folder_path)}.zip")
+
+@sigma_bp.route('/rules', methods=['GET', 'POST'])
+def custom_rules():
+    if request.method == 'POST':
+        rule_name = request.form.get('rule_name', '').strip()
+        yaml_content = request.form.get('yaml', '').strip()
+        if yaml_content and rule_name:
+            try:
+                yaml = ruamel.yaml.YAML()
+                yaml.preserve_quotes = True
+                data = yaml.load(yaml_content)  # Validate YAML
+                # Beautify YAML (no extra blank lines, consistent indentation)
+                from io import StringIO
+                buf = StringIO()
+                yaml.indent(mapping=2, sequence=4, offset=2)
+                yaml.dump(data, buf)
+                beautified = buf.getvalue().strip()
+            except Exception as e:
+                flash(f'YAML Error: {e}', 'danger')
+                return redirect(url_for('sigma.custom_rules'))
+            if not os.path.exists(CUSTOM_FOLDER):
+                os.makedirs(CUSTOM_FOLDER)
+            filename = rule_name if rule_name.endswith(('.yml', '.yaml')) else rule_name + '.yml'
+            file_path = os.path.join(CUSTOM_FOLDER, filename)
+            if os.path.exists(file_path):
+                flash('A rule with this name already exists.', 'danger')
+            else:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(beautified)
+                flash('Rule created successfully!', 'success')
+                return redirect(url_for('sigma.custom_rules'))
+        else:
+            flash('Rule name and YAML content are required.', 'danger')
+    # List only files in Custom
+    rules = []
+    if os.path.exists(CUSTOM_FOLDER):
+        for fname in sorted(os.listdir(CUSTOM_FOLDER)):
+            if fname.endswith(('.yml', '.yaml')):
+                rules.append(fname)
+    return render_template('sigma/rules.html', rules=rules)

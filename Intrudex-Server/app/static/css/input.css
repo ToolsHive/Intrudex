@@ -52,11 +52,11 @@
    Global Styles
    ============================== */
 html {
-  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 body {
+  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white;
   font-family: var(--font-body), sans-serif;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;

@@ -46,23 +46,23 @@
     </button>
   </div>
   <nav class="mt-4 px-4 flex-1">
-    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
-      <i class="fas fa-tachometer-alt"></i> Dashboard
-    </a>
-    <a href="{{ url_for('view.view_index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
-      <i class="fas fa-file"></i> View Logs
-    </a>
-    <a href="{{ url_for('sigma.sigma_index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
-      <i class="fas fa-cogs"></i> Rules
-    </a>
-    <a href="#" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
-      <i class="fas fa-info-circle"></i> About
-    </a>
-    <a href="https://github.com/ToolsHive/Intrudex" target="_blank" rel="noopener" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
-      <i class="fas fa-github"></i> Github
-    </a>
-    <!-- Add more links as needed -->
-  </nav>
+  <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+    <i class="fas fa-chart-line"></i> Dashboard
+  </a>
+  <a href="{{ url_for('view.view_index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+    <i class="fas fa-list-alt"></i> View Logs
+  </a>
+  <a href="{{ url_for('sigma.sigma_index') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+    <i class="fas fa-shield-alt"></i>View Rules
+  </a>
+  <a href="{{ url_for('sigma.custom_rules') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+    <i class="fas fa-edit"></i> Create Rule
+  </a>
+  <a href="https://github.com/ToolsHive/Intrudex" target="_blank" rel="noopener" class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-700 hover:scale-105 transition-all duration-200 mb-1">
+    <i class="fab fa-github"></i> GitHub
+  </a>
+</nav>
+
   <div class="px-4 py-4 border-t border-gray-700">
     <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-all duration-200 w-full justify-center shadow-lg">
       <i class="fas fa-sign-out-alt"></i> Logout

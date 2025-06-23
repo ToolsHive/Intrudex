@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/hint/show-hint.min.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/hint/show-hint.min.js"></script>
+<style>
+   body {
+   overflow: hidden !important;
+   }
+   #cm-container {
+   background: transparent !important;
+   height: 70vh;
+   }
+   .CodeMirror  {
+   background: transparent !important;
+   color: #e0e0e0;
+   font-size: 15px;
+   height: 100%;
+   }
+   .CodeMirror-scroll {
+   background: transparent !important;
+   color: #e0e0e0;
+   }
+   .CodeMirror-linenumbers {
+   background: transparent !important;
+   color: #e0e0e0;
+   }
+   .CodeMirror-gutter {
+   background: transparent !important;
+   color: #e0e0e0;
+   }
+</style>
+{% endblock %}
+{% block content %}
+<div class="w-full min-h-screen flex flex-col items-stretch" x-data="sigmaEditor()">
+   <!-- Flash messages -->
+   <template x-if="flashMessages.length">
+      <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
+         <template x-for="msg in flashMessages" :key="msg[1]">
+            <div class="mb-2 px-4 py-3 rounded shadow-lg"
+               :class="msg[0] === 'success' ? 'bg-green-600 text-white' : (msg[0] === 'danger' ? 'bg-red-600 text-white' : 'bg-gray-800 text-yellow-200')"
+               x-text="msg[1]"></div>
+         </template>
+      </div>
+   </template>
+   <main class="flex-1 w-full px-8 py-6 overflow-y-auto max-h-screen">
+      <form
+         method="post"
+         autocomplete="off"
+         action="{{ url_for('sigma.custom_rules') }}"
+         hx-post="{{ url_for('sigma.custom_rules') }}"
+         hx-target="#rule-list"
+         hx-swap="outerHTML"
+         @submit.prevent="saveYamlToForm"
+         class="w-full flex flex-col gap-4"
+         >
+         <div class="flex flex-col md:flex-row gap-4 items-center">
+            <input
+               id="rule_name"
+               name="rule_name"
+               required
+               placeholder="File name (e.g. suspicious.yml)"
+               class="w-full md:w-1/3 px-4 py-2 rounded-lg border border-gray-800 bg-gray-900 text-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none font-mono"
+               />
+            <button
+               type="submit"
+               class="px-6 py-2 bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold rounded-lg shadow transition"
+               >Save Rule</button>
+         </div>
+         <div class="w-full">
+            <div id="cm-container" class="rounded-lg border border-gray-800 bg-gray-900 bg-transparent"></div>
+            <textarea id="yaml" name="yaml" class="hidden"></textarea>
+         </div>
+      </form>
+   </main>
+</div>
+<script>
+const SIGMA_FIELDS = [
+  "title", "id", "description", "author", "status", "date", "modified", "references",
+  "tags", "level", "falsepositives", "related", "license",
+  "logsource", "logsource.category", "logsource.product", "logsource.service",
+  "logsource.definition", "logsource.tags", "logsource.device", "logsource.vendor",
+  "detection", "detection.selection", "detection.condition", "detection.timeframe",
+  "detection.notsel", "detection.filter", "detection.filters", "detection.regex",
+  "detection.contains", "detection.imphash", "detection.sha256", "detection.md5",
+  "detection.commandline", "detection.parentImage", "detection.image",
+  "detection.targetFilename", "detection.hashes", "detection.hostname", "detection.user",
+  "detection.processId", "detection.src_ip", "detection.dst_ip", "detection.port",
+  "detection.protocol", "detection.domain", "detection.uri", "detection.url",
+  "detection.aggregation", "detection.count", "detection.maxspan", "detection.threshold",
+  "fields", "index", "timelineIndex", "search", "action", "rule_id", "eventid",
+  "condition: selection", "condition: selection and filter", "condition: selection or notsel"
+];
+
+function sigmaHint(cm) {
+  const cur = cm.getCursor();
+  const token = cm.getTokenAt(cur);
+  const start = token.start, end = cur.ch, line = cur.line;
+  const currentWord = token.string;
+
+  if (/^[\w\.\|\:]*$/.test(currentWord)) {
+    return {
+      list: SIGMA_FIELDS
+        .filter(f => f.toLowerCase().includes(currentWord.toLowerCase()))
+        .map(f => ({ text: f.endsWith(":") ? f : f + ": ", displayText: f })),
+      from: CodeMirror.Pos(line, start),
+      to: CodeMirror.Pos(line, end)
+    };
+  }
+  return null;
+}
+
+function sigmaEditor() {
+  return {
+    cm: null,
+    flashMessages: {{ get_flashed_messages(with_categories=true)|tojson }},
+    init() {
+      this.cm = CodeMirror(document.getElementById('cm-container'), {
+        value: `title:
+id:
+description:
+status:
+author:
+logsource:
+  category:
+  product:
+detection:
+  selection:
+    Image|endswith:
+    CommandLine|contains:
+      - ''
+      - ''
+  condition:
+fields:
+  -
+  -
+level:
+tags:
+  - ''
+  - ''`,
+        mode: 'yaml',
+        theme: 'material-darker',
+        lineNumbers: false,
+        tabSize: 2,
+        viewportMargin: Infinity,
+        lineWrapping: true,
+        extraKeys: {
+          "Ctrl-Space": "autocomplete",
+          "Tab": function(cm) {
+            if (cm.state.completionActive) {
+              cm.state.completionActive.widget.pick();
+            } else {
+              cm.replaceSelection("  ");
+            }
+          }
+        },
+        hintOptions: {
+          hint: sigmaHint,
+          completeSingle: false
+        }
+      });
+
+      this.cm.on("inputRead", function(cm, change) {
+        if (change.text[0] && /[\w\:\.]/.test(change.text[0])) {
+          CodeMirror.commands.autocomplete(cm, sigmaHint, { completeSingle: false });
+        }
+      });
+    },
+    saveYamlToForm(e) {
+      document.getElementById('yaml').value = this.cm.getValue();
+      e.target.submit();
+    },
+    downloadYaml() {
+      const blob = new Blob([this.cm.getValue()], { type: 'text/yaml' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = document.getElementById('rule_name').value || 'sigma_rule.yml';
+      link.click();
+    },
+    clearEditor() {
+      this.cm.setValue('');
+    }
+  }
+}
+</script>
+
+{% endblock %}
