@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* Custom scrollbar for folder tree */
+.sigma-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #facc15 #23272f;
+}
+.sigma-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.sigma-scrollbar::-webkit-scrollbar-thumb {
+  background: #facc15;
+  border-radius: 6px;
+}
+.sigma-scrollbar::-webkit-scrollbar-track {
+  background: #23272f;
+  border-radius: 6px;
+}
+#settings-toast {
+  display: none;
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  background: #fde68a;
+  color: #92400e;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 16px 0 #0002;
+  animation: fade-in 0.3s;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+</style>
+<div class="w-full mx-auto my-10 px-4">
+  <div>
+    <h2 class="text-3xl font-bold mb-8 text-yellow-300 flex items-center gap-3">
+      <i class="fa-solid fa-gears text-yellow-400"></i>
+      Sigma Sync Settings
+    </h2>
+    <form id="sigma-settings-form" method="POST" action="{{ url_for('sigma.save_settings') }}" x-data="sigmaSettings()" @submit.prevent="saveSettings">
+      <!-- Section: Content Filtering -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">Content Filtering</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Folder Tree Include -->
+          <div>
+            <h4 class="text-lg font-semibold mb-2 text-gray-200 flex items-center gap-2">
+              <i class="fa-solid fa-folder-plus text-green-400"></i> Include Folders
+            </h4>
+            <p class="text-sm text-gray-400 mb-2">Only show rules from these folders. If empty, all are shown.</p>
+            <div class="sigma-scrollbar bg-gray-900/80 border border-gray-800 rounded-lg p-3 max-h-72 overflow-y-auto" id="include-tree" x-ref="includeTree">
+              <template x-if="folderTree.length">
+                <ul>
+                  <template x-for="folder in folderTree" :key="folder.path">
+                    <li>
+                      <div class="flex items-center gap-2">
+                        <input type="checkbox" :value="folder.path" name="include[]" x-model="include" class="accent-yellow-400">
+                        <span class="font-mono text-gray-200" x-text="folder.name"></span>
+                        <button type="button" class="ml-auto text-yellow-400 hover:text-yellow-300" x-show="folder.children && folder.children.length" @click="toggle(folder)">
+                          <i :class="folder.open ? 'fa fa-caret-down' : 'fa fa-caret-right'"></i>
+                        </button>
+                      </div>
+                      <ul x-show="folder.open" x-transition class="ml-5 border-l border-gray-700 pl-3">
+                        <template x-for="child in folder.children" :key="child.path">
+                          <li>
+                            <div class="flex items-center gap-2">
+                              <input type="checkbox" :value="child.path" name="include[]" x-model="include" class="accent-yellow-400">
+                              <span class="font-mono text-gray-200" x-text="child.name"></span>
+                              <button type="button" class="ml-auto text-yellow-400 hover:text-yellow-300" x-show="child.children && child.children.length" @click="toggle(child)">
+                                <i :class="child.open ? 'fa fa-caret-down' : 'fa fa-caret-right'"></i>
+                              </button>
+                            </div>
+                            <ul x-show="child.open" x-transition class="ml-5 border-l border-gray-700 pl-3">
+                              <template x-for="sub in child.children" :key="sub.path">
+                                <li class="ml-5">
+                                  <input type="checkbox" :value="sub.path" name="include[]" x-model="include" class="accent-yellow-400">
+                                  <span class="font-mono text-gray-200" x-text="sub.name"></span>
+                                </li>
+                              </template>
+                            </ul>
+                          </li>
+                        </template>
+                      </ul>
+                    </li>
+                  </template>
+                </ul>
+              </template>
+              <template x-if="loadingFolders">
+                <div class="text-yellow-300 py-4 flex items-center gap-2"><i class="fa fa-spinner fa-spin"></i> Loading folders...</div>
+              </template>
+            </div>
+          </div>
+          <!-- Folder Tree Exclude -->
+          <div>
+            <h4 class="text-lg font-semibold mb-2 text-gray-200 flex items-center gap-2">
+              <i class="fa-solid fa-folder-minus text-red-400"></i> Exclude Folders
+            </h4>
+            <p class="text-sm text-gray-400 mb-2">Hide rules from these folders.</p>
+            <div class="sigma-scrollbar bg-gray-900/80 border border-gray-800 rounded-lg p-3 max-h-72 overflow-y-auto" id="exclude-tree" x-ref="excludeTree">
+              <template x-if="folderTree.length">
+                <ul>
+                  <template x-for="folder in folderTree" :key="folder.path">
+                    <li>
+                      <div class="flex items-center gap-2">
+                        <input type="checkbox" :value="folder.path" name="exclude[]" x-model="exclude" class="accent-yellow-400">
+                        <span class="font-mono text-gray-200" x-text="folder.name"></span>
+                        <button type="button" class="ml-auto text-yellow-400 hover:text-yellow-300" x-show="folder.children && folder.children.length" @click="toggle(folder)">
+                          <i :class="folder.open ? 'fa fa-caret-down' : 'fa fa-caret-right'"></i>
+                        </button>
+                      </div>
+                      <ul x-show="folder.open" x-transition class="ml-5 border-l border-gray-700 pl-3">
+                        <template x-for="child in folder.children" :key="child.path">
+                          <li>
+                            <div class="flex items-center gap-2">
+                              <input type="checkbox" :value="child.path" name="exclude[]" x-model="exclude" class="accent-yellow-400">
+                              <span class="font-mono text-gray-200" x-text="child.name"></span>
+                              <button type="button" class="ml-auto text-yellow-400 hover:text-yellow-300" x-show="child.children && child.children.length" @click="toggle(child)">
+                                <i :class="child.open ? 'fa fa-caret-down' : 'fa fa-caret-right'"></i>
+                              </button>
+                            </div>
+                            <ul x-show="child.open" x-transition class="ml-5 border-l border-gray-700 pl-3">
+                              <template x-for="sub in child.children" :key="sub.path">
+                                <li class="ml-5">
+                                  <input type="checkbox" :value="sub.path" name="exclude[]" x-model="exclude" class="accent-yellow-400">
+                                  <span class="font-mono text-gray-200" x-text="sub.name"></span>
+                                </li>
+                              </template>
+                            </ul>
+                          </li>
+                        </template>
+                      </ul>
+                    </li>
+                  </template>
+                </ul>
+              </template>
+              <template x-if="loadingFolders">
+                <div class="text-yellow-300 py-4 flex items-center gap-2"><i class="fa fa-spinner fa-spin"></i> Loading folders...</div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Sync & Behavior -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">Sync & Behavior</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="sync_interval" class="block font-semibold mb-2">Sync Interval (seconds)</label>
+            <input type="number" id="sync_interval" name="sync_interval" x-model="sync_interval" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+            <p class="text-sm text-gray-400 mt-1">How often to check for new rules when auto-refresh is on.</p>
+          </div>
+          <div>
+            <label class="flex items-center space-x-3 mt-8">
+              <input type="checkbox" name="auto_reload" x-model="auto_reload" class="accent-yellow-400 h-5 w-5">
+              <span>Auto-refresh rules on change</span>
+            </label>
+            <label class="flex items-center space-x-3 mt-4">
+              <input type="checkbox" name="show_hidden" x-model="show_hidden" class="accent-yellow-400 h-5 w-5">
+              <span>Show hidden files/folders (starting with '.')</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: API Integration -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">API Integration</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" name="api_enabled" x-model="api_enabled" class="accent-yellow-400 h-5 w-5">
+                    <span>Enable API Endpoint for Client Sync</span>
+                </label>
+                <p class="text-sm text-gray-400 mt-1">Allows clients to fetch rules using an API key.</p>
+            </div>
+            <div>
+                <label for="client_sync_frequency" class="block font-semibold mb-2">Client Sync Frequency (seconds)</label>
+                <input type="number" id="client_sync_frequency" name="client_sync_frequency" x-model="client_sync_frequency" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+                <p class="text-sm text-gray-400 mt-1">Recommended interval for clients to poll for updates.</p>
+            </div>
+            <div class="md:col-span-2">
+                <label for="api_key" class="block font-semibold mb-2">API Key</label>
+                <div class="flex gap-2">
+                    <input type="password" id="api_key" name="api_key" x-model="api_key" readonly class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 font-mono">
+                    <button type="button" @click="document.getElementById('api_key').type = document.getElementById('api_key').type === 'password' ? 'text' : 'password'" class="px-3 bg-gray-700 text-gray-200 rounded hover:bg-gray-600"><i class="fa fa-eye"></i></button>
+                    <button type="button" @click="generateApiKey" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-500 transition flex items-center gap-2" :disabled="generatingKey">
+                        <span x-show="!generatingKey">Generate New Key</span>
+                        <span x-show="generatingKey"><i class="fa fa-spinner fa-spin"></i> Generating...</span>
+                    </button>
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block font-semibold mb-2">API Endpoint URL</label>
+                <input type="text" value="{{ url_for('sigma.api_rules', _external=True) }}" readonly class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-gray-400 font-mono">
+                <p class="text-sm text-gray-400 mt-1">Clients should use this URL with an `X-API-Key` header.</p>
+            </div>
+        </div>
+      </div>
+
+      <!-- Section: Sigma Conversion -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">Sigma Conversion</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="sigma_conversion_backend" class="block font-semibold mb-2">Default Conversion Backend</label>
+            <select id="sigma_conversion_backend" name="sigma_conversion_backend" x-model="sigma_conversion_backend" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+              <option value="json">JSON</option>
+              <option value="splunk">Splunk</option>
+              <option value="es-qs">Elasticsearch (Query String)</option>
+              <option value="powershell">PowerShell</option>
+              <option value="mdr">Microsoft Defender</option>
+              <option value="sentinel">Microsoft Sentinel</option>
+            </select>
+            <p class="text-sm text-gray-400 mt-1">The target format for rules sent via the API.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Application Configuration -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">Application Configuration</h3>
+        <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg my-4" role="alert">
+          <div class="flex">
+            <div class="py-1"><i class="fa-solid fa-triangle-exclamation mr-3"></i></div>
+            <div>
+              <p class="font-bold">Warning</p>
+              <p class="text-sm">Changing these settings requires a manual restart of the application to take effect.</p>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="FLASK_RUN_HOST" class="block font-semibold mb-2">Host</label>
+            <input type="text" id="FLASK_RUN_HOST" name="FLASK_RUN_HOST" x-model="FLASK_RUN_HOST" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+          </div>
+          <div>
+            <label for="FLASK_RUN_PORT" class="block font-semibold mb-2">Port</label>
+            <input type="number" id="FLASK_RUN_PORT" name="FLASK_RUN_PORT" x-model="FLASK_RUN_PORT" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+          </div>
+          <div class="md:col-span-2">
+            <label for="DATABASE_URL" class="block font-semibold mb-2">Database URL</label>
+            <input type="text" id="DATABASE_URL" name="DATABASE_URL" x-model="DATABASE_URL" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 font-mono focus:ring-2 focus:ring-yellow-400">
+          </div>
+          <div class="md:col-span-2">
+            <label for="SECRET_KEY" class="block font-semibold mb-2">Secret Key</label>
+            <div class="flex gap-2">
+                <input type="password" id="SECRET_KEY" name="SECRET_KEY" x-model="SECRET_KEY" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 font-mono focus:ring-2 focus:ring-yellow-400">
+                <button type="button" @click="document.getElementById('SECRET_KEY').type = document.getElementById('SECRET_KEY').type === 'password' ? 'text' : 'password'" class="px-3 bg-gray-700 text-gray-200 rounded hover:bg-gray-600"><i class="fa fa-eye"></i></button>
+                <button type="button" @click="generateSecretKey" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-500 transition flex items-center gap-2" :disabled="generatingSecretKey">
+                    <span x-show="!generatingSecretKey">Generate</span>
+                    <span x-show="generatingSecretKey"><i class="fa fa-spinner fa-spin"></i></span>
+                </button>
+            </div>
+          </div>
+          <div>
+            <label for="Mode" class="block font-semibold mb-2">Mode</label>
+            <select id="Mode" name="Mode" x-model="Mode" class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+              <option value="development">Development</option>
+              <option value="production">Production</option>
+            </select>
+          </div>
+          <div>
+            <label class="flex items-center space-x-3 mt-8">
+              <input type="checkbox" name="FLASK_DEBUG" x-model="FLASK_DEBUG" class="accent-yellow-400 h-5 w-5">
+              <span>Enable Debug Mode</span>
+            </label>
+            <label class="flex items-center space-x-3 mt-4">
+              <input type="checkbox" name="SQLALCHEMY_TRACK_MODIFICATIONS" x-model="SQLALCHEMY_TRACK_MODIFICATIONS" class="accent-yellow-400 h-5 w-5">
+              <span>Enable SQLAlchemy Track Modifications</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-4 mt-10 border-t border-yellow-400/20 pt-6">
+        <button type="button" @click="resetSettings" class="px-4 py-2 bg-gray-700 text-gray-200 font-semibold rounded hover:bg-gray-600 transition">Reset</button>
+        <button type="submit" class="px-6 py-2 bg-yellow-400 text-gray-900 font-semibold rounded hover:bg-yellow-300 transition flex items-center gap-2" :disabled="saving">
+          <span x-show="!saving">Save Settings</span>
+          <span x-show="saving"><i class="fa fa-spinner fa-spin"></i> Saving...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="settings-toast">Settings saved!</div>
+<script>
+function sigmaSettings() {
+  return {
+    folderTree: [],
+    include: {{ settings.include|tojson }},
+    exclude: {{ settings.exclude|tojson }},
+    auto_reload: {{ 'true' if settings.auto_reload else 'false' }},
+    show_hidden: {{ 'true' if settings.show_hidden else 'false' }},
+    sync_interval: {{ settings.sync_interval }},
+    api_enabled: {{ 'true' if settings.api_enabled else 'false' }},
+    api_key: "{{ settings.api_key }}",
+    client_sync_frequency: {{ settings.client_sync_frequency }},
+    sigma_conversion_backend: "{{ settings.get('sigma_conversion_backend', 'json') }}",
+    FLASK_RUN_HOST: "{{ settings.get('FLASK_RUN_HOST', '127.0.0.1') }}",
+    FLASK_RUN_PORT: "{{ settings.get('FLASK_RUN_PORT', '80') }}",
+    FLASK_DEBUG: {{ 'true' if settings.get('FLASK_DEBUG') else 'false' }},
+    DATABASE_URL: "{{ settings.get('DATABASE_URL', 'sqlite:///intrudex.sqlite3') }}",
+    Mode: "{{ settings.get('Mode', 'development') }}",
+    SECRET_KEY: "{{ settings.get('SECRET_KEY', '') }}",
+    SQLALCHEMY_TRACK_MODIFICATIONS: {{ 'true' if settings.get('SQLALCHEMY_TRACK_MODIFICATIONS') else 'false' }},
+    loadingFolders: true,
+    saving: false,
+    generatingKey: false,
+    generatingSecretKey: false,
+    original: {},
+    async fetchFolders() {
+      this.loadingFolders = true;
+      const resp = await fetch('{{ url_for("sigma.sigma_settings_folders") }}');
+      this.folderTree = await resp.json();
+      // Add open state for all folders
+      function addOpen(arr) {
+        arr.forEach(f => {
+          f.open = false;
+          if (f.children && f.children.length) addOpen(f.children);
+        });
+      }
+      addOpen(this.folderTree);
+      this.loadingFolders = false;
+    },
+    toggle(folder) {
+      folder.open = !folder.open;
+    },
+    async generateApiKey() {
+        if (!confirm('Are you sure you want to generate a new API key? This will invalidate the old one.')) {
+            return;
+        }
+        this.generatingKey = true;
+        const resp = await fetch('{{ url_for("sigma.generate_api_key") }}', { method: 'POST' });
+        const data = await resp.json();
+        this.api_key = data.api_key;
+        this.generatingKey = false;
+    },
+    async generateSecretKey() {
+        this.generatingSecretKey = true;
+        const resp = await fetch('{{ url_for("sigma.generate_secret_key") }}', { method: 'POST' });
+        const data = await resp.json();
+        this.SECRET_KEY = data.secret_key;
+        this.generatingSecretKey = false;
+    },
+    saveSettings() {
+      this.saving = true;
+      const form = document.getElementById('sigma-settings-form');
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form)
+      }).then(resp => {
+        this.saving = false;
+        if (resp.redirected) {
+          window.location = resp.url;
+        } else {
+          document.getElementById('settings-toast').style.display = 'block';
+          setTimeout(() => document.getElementById('settings-toast').style.display = 'none', 1200);
+        }
+      });
+    },
+    resetSettings() {
+      this.include = [...this.original.include];
+      this.exclude = [...this.original.exclude];
+      this.auto_reload = this.original.auto_reload;
+      this.show_hidden = this.original.show_hidden;
+      this.sync_interval = this.original.sync_interval;
+      this.api_enabled = this.original.api_enabled;
+      this.api_key = this.original.api_key;
+      this.client_sync_frequency = this.original.client_sync_frequency;
+      this.FLASK_RUN_HOST = this.original.FLASK_RUN_HOST;
+      this.FLASK_RUN_PORT = this.original.FLASK_RUN_PORT;
+      this.FLASK_DEBUG = this.original.FLASK_DEBUG;
+      this.DATABASE_URL = this.original.DATABASE_URL;
+      this.Mode = this.original.Mode;
+      this.SECRET_KEY = this.original.SECRET_KEY;
+      this.SQLALCHEMY_TRACK_MODIFICATIONS = this.original.SQLALCHEMY_TRACK_MODIFICATIONS;
+    },
+    init() {
+      this.fetchFolders();
+      // Save original for reset
+      this.original = {
+        include: [...this.include],
+        exclude: [...this.exclude],
+        auto_reload: this.auto_reload,
+        show_hidden: this.show_hidden,
+        sync_interval: this.sync_interval,
+        api_enabled: this.api_enabled,
+        api_key: this.api_key,
+        client_sync_frequency: this.client_sync_frequency,
+        FLASK_RUN_HOST: this.FLASK_RUN_HOST,
+        FLASK_RUN_PORT: this.FLASK_RUN_PORT,
+        FLASK_DEBUG: this.FLASK_DEBUG,
+        DATABASE_URL: this.DATABASE_URL,
+        Mode: this.Mode,
+        SECRET_KEY: this.SECRET_KEY,
+        SQLALCHEMY_TRACK_MODIFICATIONS: this.SQLALCHEMY_TRACK_MODIFICATIONS
+      };
+    }
+  }
+}
+document.addEventListener('alpine:init', () => {
+  Alpine.data('sigmaSettings', sigmaSettings);
+});
+</script>
+{% endblock %}

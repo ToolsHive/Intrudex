@@ -1,13 +1,24 @@
 import os
 import yaml
+import time
+import json
 import shutil
+import secrets
 import tempfile
+import threading
 import ruamel.yaml
-from flask import Blueprint, render_template, abort, request, send_file, redirect, url_for, flash
+from flask import Blueprint, render_template, abort, request, send_file, redirect, url_for, flash, jsonify
+from dotenv import find_dotenv, set_key, dotenv_values
 
+# Blueprint and constants
 sigma_bp = Blueprint('sigma', __name__, url_prefix='/sigma')
 SIGMA_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Sigma'))
 CUSTOM_FOLDER = os.path.join(SIGMA_ROOT, 'Custom')
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), 'sigma_settings.json')
+DOTENV_PATH = find_dotenv()
+
+_rules_cache = {'data': [], 'timestamp': 0}
+_rules_lock = threading.Lock()
 
 def build_sigma_tree():
     """
@@ -142,3 +153,153 @@ def custom_rules():
             if fname.endswith(('.yml', '.yaml')):
                 rules.append(fname)
     return render_template('sigma/rules.html', rules=rules)
+
+
+def load_settings():
+    # Load JSON settings
+    try:
+        with open(SETTINGS_FILE, 'r') as f:
+            settings = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        settings = {}
+
+    # Load .env settings
+    env_values = dotenv_values(DOTENV_PATH) if DOTENV_PATH else {}
+
+    # Set defaults for JSON-based settings
+    defaults = {
+        "include": [], "exclude": [], "auto_reload": False,
+        "show_hidden": False, "sync_interval": 60,
+        "api_enabled": False, "api_key": "", "client_sync_frequency": 300
+    }
+    for key, value in defaults.items():
+        settings.setdefault(key, value)
+
+    # Add .env values to the settings dict for the template
+    settings['FLASK_RUN_HOST'] = env_values.get('FLASK_RUN_HOST', '127.0.0.1')
+    settings['FLASK_RUN_PORT'] = env_values.get('FLASK_RUN_PORT', '80')
+    settings['FLASK_DEBUG'] = env_values.get('FLASK_DEBUG', '1') == '1'
+    settings['DATABASE_URL'] = env_values.get('DATABASE_URL', 'sqlite:///intrudex.sqlite3')
+    settings['Mode'] = env_values.get('Mode', 'development')
+    settings['SECRET_KEY'] = env_values.get('SECRET_KEY', '')
+    settings['SQLALCHEMY_TRACK_MODIFICATIONS'] = env_values.get('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() in ('true', '1')
+
+    return settings
+
+
+def _save_settings_to_file(data):
+    with open(SETTINGS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+
+def build_sigma_tree_for_settings():
+    """Return a tree for settings UI (folders only, with children)."""
+    def walk(dir_path, rel_path=''):
+        entries = []
+        try:
+            # List only directories
+            items = sorted([d for d in os.listdir(dir_path) if os.path.isdir(os.path.join(dir_path, d))], key=lambda x: x.lower())
+        except Exception:
+            return entries
+        for item in items:
+            abs_item = os.path.join(dir_path, item)
+            rel_item = os.path.join(rel_path, item) if rel_path else item
+            children = walk(abs_item, rel_item)
+            entries.append({
+                'name': item,
+                'path': rel_item.replace("\\", "/"),
+                'children': children
+            })
+        return entries
+    return walk(SIGMA_ROOT)
+
+@sigma_bp.route('/settings/folders')
+def sigma_settings_folders():
+    # Returns the folder tree as JSON for the settings UI
+    return jsonify(build_sigma_tree_for_settings())
+
+@sigma_bp.route('/settings', methods=['GET'])
+def sigma_settings():
+    settings = load_settings()
+    return render_template("sigma/settings.html", settings=settings)
+
+
+@sigma_bp.route('/settings', methods=['POST'])
+def save_settings():
+    # Save JSON-based settings
+    json_data = {
+        "include": request.form.getlist('include[]'),
+        "exclude": request.form.getlist('exclude[]'),
+        "auto_reload": 'auto_reload' in request.form,
+        "show_hidden": 'show_hidden' in request.form,
+        "sync_interval": int(request.form.get('sync_interval', 60)),
+        "api_enabled": 'api_enabled' in request.form,
+        "client_sync_frequency": int(request.form.get('client_sync_frequency', 300)),
+        "api_key": load_settings().get('api_key', '') # Preserve existing API key
+    }
+    _save_settings_to_file(json_data)
+
+    # Save .env settings
+    if DOTENV_PATH:
+        set_key(DOTENV_PATH, "FLASK_RUN_HOST", request.form.get('FLASK_RUN_HOST', '127.0.0.1'))
+        set_key(DOTENV_PATH, "FLASK_RUN_PORT", request.form.get('FLASK_RUN_PORT', '80'))
+        set_key(DOTENV_PATH, "FLASK_DEBUG", '1' if 'FLASK_DEBUG' in request.form else '0')
+        set_key(DOTENV_PATH, "DATABASE_URL", request.form.get('DATABASE_URL', 'sqlite:///intrudex.sqlite3'))
+        set_key(DOTENV_PATH, "Mode", request.form.get('Mode', 'development'))
+        set_key(DOTENV_PATH, "SECRET_KEY", request.form.get('SECRET_KEY', ''))
+        set_key(DOTENV_PATH, "SQLALCHEMY_TRACK_MODIFICATIONS", 'True' if 'SQLALCHEMY_TRACK_MODIFICATIONS' in request.form else 'False')
+
+    flash("Settings updated successfully. Application restart is required for some changes to take effect.", "success")
+    return redirect(url_for("sigma.sigma_settings"))
+
+@sigma_bp.route('/settings/generate-api-key', methods=['POST'])
+def generate_api_key():
+    settings = load_settings()
+    new_key = secrets.token_hex(32)
+    settings['api_key'] = new_key
+    _save_settings_to_file(settings)
+    return jsonify({'api_key': new_key})
+
+@sigma_bp.route('/settings/generate-secret-key', methods=['POST'])
+def generate_secret_key():
+    new_key = secrets.token_hex(24)
+    return jsonify({'secret_key': new_key})
+
+@sigma_bp.route('/api/rules')
+def api_rules():
+    settings = load_settings()
+    if not settings.get('api_enabled'):
+        return jsonify({'error': 'API is disabled'}), 403
+
+    provided_key = request.headers.get('X-API-Key')
+    if not provided_key or not secrets.compare_digest(provided_key, settings.get('api_key', '')):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Return the filtered file/folder tree structure
+    sigma_tree = build_sigma_tree()
+    response_data = {
+        'timestamp': time.time(),
+        'tree': sigma_tree
+    }
+    return jsonify(response_data)
+
+@sigma_bp.route('/api/rule/<path:rule_path>')
+def api_rule_content(rule_path):
+    settings = load_settings()
+    if not settings.get('api_enabled'):
+        return jsonify({'error': 'API is disabled'}), 403
+
+    provided_key = request.headers.get('X-API-Key')
+    if not provided_key or not secrets.compare_digest(provided_key, settings.get('api_key', '')):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    safe_path = os.path.normpath(os.path.join(SIGMA_ROOT, rule_path))
+    if not safe_path.startswith(SIGMA_ROOT) or not os.path.isfile(safe_path):
+        return jsonify({'error': 'Rule not found'}), 404
+
+    try:
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return jsonify({'path': rule_path, 'content': content})
+    except Exception as e:
+        return jsonify({'error': f'Could not read rule: {e}'}), 500

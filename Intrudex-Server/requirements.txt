@@ -24,6 +24,7 @@ MarkupSafe==3.0.2
 mdurl==0.1.2
 packaging==24.2
 pefile==2023.2.7
+prettytable==3.16.0
 proxy_tools==0.1.0
 psycopg2==2.9.10
 pyarmor==9.1.6
@@ -32,6 +33,7 @@ pycparser==2.22
 Pygments==2.19.1
 pyinstaller==6.12.0
 pyinstaller-hooks-contrib==2025.2
+pyparsing==3.2.3
 python-dotenv==1.1.0
 pythonnet==3.0.5
 pywebview==5.4
@@ -47,4 +49,5 @@ soupsieve==2.7
 SQLAlchemy==2.0.40
 typing_extensions==4.13.2
 urllib3==2.5.0
+wcwidth==0.2.13
 Werkzeug==3.1.3

@@ -576,6 +576,7 @@ style.css
 *.sqlite3
 *.db
 migrations
+sigma_settings.json
 
 fa-brands-400.ttf
 fa-brands-400.woff2
