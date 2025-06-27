@@ -28,7 +28,7 @@ SysmonCollector::~SysmonCollector() {
 void SysmonCollector::loadConfiguration() {
     std::ifstream configFile("config/client_config.json");
     if (!configFile.is_open()) {
-        std::cerr << "[SysmonCollector] Failed to open configuration file. Using default values.\n";
+        printStatus("Failed to open configuration file. Using default values.");
         serverUrl = "http://localhost/api/logs/sysmon";
         eventLogSource = L"Microsoft-Windows-Sysmon/Operational";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
@@ -49,7 +49,7 @@ void SysmonCollector::loadConfiguration() {
         logLevel = config.value("log_level", "info");
         sendEvents = config.value("send_events", true);
 
-        std::cout << "[SysmonCollector] Configuration loaded successfully.\n";
+        printStatus("Configuration loaded successfully.");
     } catch (const std::exception& e) {
         std::cerr << "[SysmonCollector] Error parsing config: " << e.what() << ". Using default values.\n";
         serverUrl = "http://localhost/api/logs/sysmon";
@@ -95,7 +95,8 @@ bool SysmonCollector::start() {
     );
 
     if (!subscriptionHandle) {
-        std::cerr << "[SysmonCollector] Failed to subscribe to events. Error: " << GetLastError() << std::endl;
+        DWORD errorCode = GetLastError();
+        printStatus("Failed to subscribe to events. Error: " + std::to_string(errorCode));
         return false;
     }
 
@@ -135,4 +136,9 @@ void SysmonCollector::handleEvent(const std::string& eventXml) const {
     } catch (const std::exception& e) {
         std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
     }
+}
+
+void SysmonCollector::printStatus(const std::string& msg) const {
+    std::lock_guard<std::mutex> lock(log_print_mutex);
+    std::cout << "[SysmonCollector] " << msg << std::endl << std::flush;
 }

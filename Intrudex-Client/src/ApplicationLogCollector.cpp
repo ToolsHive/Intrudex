@@ -27,7 +27,7 @@ ApplicationLogCollector::~ApplicationLogCollector() {
 void ApplicationLogCollector::loadConfiguration() {
     std::ifstream configFile("config/client_config.json");
     if (!configFile.is_open()) {
-        std::cerr << "[ApplicationLogCollector] Failed to open configuration file. Using default values.\n";
+        printStatus("Failed to open configuration file. Using default values.");
         apiUrl = "http://localhost/api/logs/application";
         eventLogSource = L"Application";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
@@ -46,9 +46,9 @@ void ApplicationLogCollector::loadConfiguration() {
         sleepIntervalMs = config.value("sleep_interval_ms", 5000);
         logLevel = config.value("log_level", "info");
 
-        std::cout << "[ApplicationLogCollector] Configuration loaded successfully.\n";
+        printStatus("Configuration loaded successfully.");
     } catch (const std::exception& e) {
-        std::cerr << "[ApplicationLogCollector] Error parsing config: " << e.what() << ". Using default values.\n";
+        printStatus("Error parsing config: " + std::string(e.what()) + ". Using default values.");
         apiUrl = "http://localhost/api/logs/application";
         eventLogSource = L"Application";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
@@ -91,7 +91,7 @@ bool ApplicationLogCollector::start() {
     );
 
     if (!subscriptionHandle) {
-        std::cerr << "[ApplicationLogCollector] Failed to subscribe to events. Error: " << GetLastError() << std::endl;
+        printStatus("Failed to subscribe to events. Error: " + std::to_string(GetLastError()));
         return false;
     }
 
@@ -131,4 +131,9 @@ void ApplicationLogCollector::handleEvent(const std::string& eventXml) const {
     } catch (const std::exception& e) {
         std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
     }
+}
+
+void ApplicationLogCollector::printStatus(const std::string& msg) const {
+    std::lock_guard<std::mutex> lock(log_print_mutex);
+    std::cout << "[ApplicationLogCollector] " << msg << std::endl << std::flush;
 }

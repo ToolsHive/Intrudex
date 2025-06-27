@@ -27,7 +27,7 @@ SecurityLogCollector::~SecurityLogCollector() {
 void SecurityLogCollector::loadConfiguration() {
     std::ifstream configFile("config/client_config.json");
     if (!configFile.is_open()) {
-        std::cerr << "[SecurityLogCollector] Failed to open configuration file. Using default values.\n";
+        printStatus("Failed to open configuration file. Using default values.");
         apiUrl = "http://localhost/api/logs/security";
         eventLogSource = L"Security";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
@@ -46,9 +46,9 @@ void SecurityLogCollector::loadConfiguration() {
         sleepIntervalMs = config.value("security_sleep_interval_ms", 5000);
         logLevel = config.value("security_log_level", "info");
 
-        std::cout << "[SecurityLogCollector] Configuration loaded successfully.\n";
+        printStatus("Configuration loaded successfully.");
     } catch (const std::exception& e) {
-        std::cerr << "[SecurityLogCollector] Error parsing config: " << e.what() << ". Using default values.\n";
+        printStatus("Error parsing config: " + std::string(e.what()) + ". Using default values.");
         apiUrl = "http://localhost/api/logs/security";
         eventLogSource = L"Security";
         eventFilter = L"*[System[(Level=4 or Level=0)]]";
@@ -131,4 +131,9 @@ void SecurityLogCollector::handleEvent(const std::string& eventXml) const {
     } catch (const std::exception& e) {
         std::cerr << "[Warning] Failed to process event XML: " << e.what() << ". Skipping log.\n";
     }
+}
+
+void SecurityLogCollector::printStatus(const std::string& msg) const {
+    std::lock_guard<std::mutex> lock(log_print_mutex);
+    std::cout << "[SecurityLogCollector] " << msg << std::endl << std::flush;
 }

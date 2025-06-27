@@ -1,35 +1,46 @@
 from app.db import db
 
 
-class SysmonLog(db.Model):
-    __tablename__: str = 'sysmon_logs'
-
-    id = db.Column(db.Integer, primary_key=True)  # Auto-incrementing primary key
-    event_id = db.Column(db.Integer)  # EventID (e.g., 7)
-    time_created = db.Column(db.DateTime)  # TimeCreated (SystemTime)
-    computer = db.Column(db.String(255))  # Computer name
-    process_guid = db.Column(db.String(100))  # ProcessGuid
-    process_id = db.Column(db.Integer)  # ProcessId
-    image = db.Column(db.String(500))  # Path to the executable (Image)
-    image_loaded = db.Column(db.String(500))  # Loaded DLL or file
-    file_version = db.Column(db.String(255))  # FileVersion
-    description = db.Column(db.String(255))  # Description
-    product = db.Column(db.String(255))  # Product
-    company = db.Column(db.String(255))  # Company
-    original_file_name = db.Column(db.String(255))  # OriginalFileName
-    hashes = db.Column(db.String(500))  # Hashes
-    signed = db.Column(db.Boolean)  # Signed (true/false)
-    signature = db.Column(db.String(255))  # Signature
-    signature_status = db.Column(db.String(50))  # SignatureStatus (Valid/Invalid)
-    user = db.Column(db.String(255))  # User running the process
-    rule_name = db.Column(db.String(255))  # RuleName (usually "-")
+class ClientHost(db.Model):
+    __tablename__ = 'client_hosts'
+    id = db.Column(db.Integer, primary_key=True)
+    hostname = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    # Optionally, add more metadata fields (e.g., description, registered_at)
+    # description = db.Column(db.String(256))
+    # registered_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<SysmonLog {self.id} - {self.image}>'
+        return f'<ClientHost {self.id} - {self.hostname}>'
+
+class SysmonLog(db.Model):
+    __tablename__ = 'sysmon_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer)
+    time_created = db.Column(db.DateTime)
+    computer = db.Column(db.String(255))
+    process_guid = db.Column(db.String(100))
+    process_id = db.Column(db.Integer)
+    image = db.Column(db.String(500))
+    image_loaded = db.Column(db.String(500))
+    file_version = db.Column(db.String(255))
+    description = db.Column(db.String(255))
+    product = db.Column(db.String(255))
+    company = db.Column(db.String(255))
+    original_file_name = db.Column(db.String(255))
+    hashes = db.Column(db.String(500))
+    signed = db.Column(db.Boolean)
+    signature = db.Column(db.String(255))
+    signature_status = db.Column(db.String(50))
+    user = db.Column(db.String(255))
+    rule_name = db.Column(db.String(255))
+    client_id = db.Column(db.Integer, db.ForeignKey('client_hosts.id'), index=True)
+    client = db.relationship('ClientHost', backref='sysmon_logs')
+
+    def __repr__(self):
+        return f'<SysmonLog {self.id} - {self.image} - {self.client.hostname if self.client else "NoHost"}>'
 
 class ApplicationLog(db.Model):
     __tablename__ = 'application_logs'
-
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, nullable=False)
     time_created = db.Column(db.DateTime, nullable=False)
@@ -42,13 +53,14 @@ class ApplicationLog(db.Model):
     event_type = db.Column(db.String(128), nullable=False)
     user = db.Column(db.String(256), nullable=False)
     rule_name = db.Column(db.String(256), nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client_hosts.id'), index=True)
+    client = db.relationship('ClientHost', backref='application_logs')
 
     def __repr__(self):
-        return f'<ApplicationLog {self.id} - {self.image}>'
+        return f'<ApplicationLog {self.id} - {self.image} - {self.client.hostname if self.client else "NoHost"}>'
 
 class SecurityLog(db.Model):
     __tablename__ = 'security_logs'
-
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, nullable=False)
     time_created = db.Column(db.DateTime, nullable=False)
@@ -62,13 +74,14 @@ class SecurityLog(db.Model):
     subject_logon_id = db.Column(db.String(255), nullable=True)
     caller_process_id = db.Column(db.String(255), nullable=True)
     caller_process_name = db.Column(db.String(512), nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client_hosts.id'), index=True)
+    client = db.relationship('ClientHost', backref='security_logs')
 
     def __repr__(self):
-        return f'<SecurityLog {self.id} - {self.event_id}>'
+        return f'<SecurityLog {self.id} - {self.event_id} - {self.client.hostname if self.client else "NoHost"}>'
 
 class SystemLog(db.Model):
     __tablename__ = 'system_logs'
-
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, nullable=False)
     time_created = db.Column(db.DateTime, nullable=False)
@@ -80,7 +93,9 @@ class SystemLog(db.Model):
     process_id = db.Column(db.Integer, nullable=True)
     thread_id = db.Column(db.Integer, nullable=True)
     user_id = db.Column(db.String(128), nullable=True)
-    event_data = db.Column(db.JSON, nullable=True)  # Store all params as JSON
+    event_data = db.Column(db.JSON, nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client_hosts.id'), index=True)
+    client = db.relationship('ClientHost', backref='system_logs')
 
     def __repr__(self):
-        return f'<SystemLog {self.id} - {self.event_id}>'
+        return f'<SystemLog {self.id} - {self.event_id} - {self.client.hostname if self.client else "NoHost"}>'

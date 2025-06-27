@@ -7,6 +7,23 @@
 
 SystemHttpSender::SystemHttpSender(const std::string& url) : apiUrl(url) {}
 
+std::string SystemHttpSender::getHostname() {
+#ifdef _WIN32
+    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD size = sizeof(hostname) / sizeof(hostname[0]);
+    if (GetComputerNameA(hostname, &size)) {
+        return std::string(hostname);
+    }
+    return "unknown";
+#else
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        return std::string(hostname);
+    }
+    return "unknown";
+#endif
+}
+
 bool SystemHttpSender::sendLog(const std::string& logData) {
     HINTERNET hSession = WinHttpOpen(L"Intrudex System Client/1.0",
                                      WINHTTP_ACCESS_TYPE_NO_PROXY,
@@ -39,8 +56,12 @@ bool SystemHttpSender::sendLog(const std::string& logData) {
         return false;
     }
 
+    std::wstring headers = L"Content-Type: application/xml\r\n";
+    std::string clientId = SystemHttpSender::getHostname();
+    headers += L"X-Hostname: " + std::wstring(clientId.begin(), clientId.end()) + L"\r\n";
+
     std::wstring wLogData = utf8_to_wstring(logData);
-    if (!WinHttpSendRequest(hRequest, L"Content-Type: application/xml", -1,
+    if (!WinHttpSendRequest(hRequest, headers.c_str(), -1,
                             (LPVOID)wLogData.c_str(), wLogData.size() * sizeof(wchar_t),
                             wLogData.size() * sizeof(wchar_t), 0)) {
         std::cerr << "[SystemHttpSender] Failed to send request. Error: " << GetLastError() << std::endl;

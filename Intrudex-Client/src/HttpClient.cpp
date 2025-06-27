@@ -11,6 +11,23 @@ HttpClient::HttpClient(std::string serverUrl, std::string userAgent, std::string
       wcontentType(std::wstring(contentType.begin(), contentType.end())),
       forceHttps(useHttps) {}
 
+std::string HttpClient::getHostname() {
+#ifdef _WIN32
+    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD size = sizeof(hostname) / sizeof(hostname[0]);
+    if (GetComputerNameA(hostname, &size)) {
+        return std::string(hostname);
+    }
+    return "unknown";
+#else
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        return std::string(hostname);
+    }
+    return "unknown";
+#endif
+}
+
 bool HttpClient::sendLog(const std::string& eventData) const {
     int wcharsNum = MultiByteToWideChar(CP_UTF8, 0, serverUrl.c_str(), -1, nullptr, 0);
     std::wstring wurl(wcharsNum, 0);
@@ -59,7 +76,10 @@ bool HttpClient::sendLog(const std::string& eventData) const {
         return false;
     }
 
-    const std::wstring headers = L"Content-Type: " + wcontentType + L"\r\n";
+    // Prepare headers with X-Hostname
+    std::wstring headers = L"Content-Type: " + wcontentType + L"\r\n";
+    std::string clientId = HttpClient::getHostname();
+    headers += L"X-Hostname: " + std::wstring(clientId.begin(), clientId.end()) + L"\r\n";
 
     const int bodyLen = MultiByteToWideChar(CP_UTF8, 0, eventData.c_str(), -1, nullptr, 0);
     std::wstring wbody(bodyLen, 0);

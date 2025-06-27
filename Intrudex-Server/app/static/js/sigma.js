@@ -1,4 +1,4 @@
-   let selectedFolderPath = '';
+let selectedFolderPath = '';
    let flatFolders = [];
    let flatFiles = [];
    let lastSearchQuery = "";
@@ -19,6 +19,7 @@
 
    // Flatten folders for sidebar
    function flattenFolders(tree, parentPath = '') {
+     if (!Array.isArray(tree)) return [];
      let out = [];
      tree.forEach(entry => {
        const fullPath = parentPath ? parentPath + '/' + entry.name : entry.name;
@@ -37,6 +38,7 @@
 
    // Flatten files for search
    function flattenFiles(tree, parentPath = '') {
+     if (!Array.isArray(tree)) return [];
      let out = [];
      tree.forEach(entry => {
        const fullPath = parentPath ? parentPath + '/' + entry.name : entry.name;
@@ -56,6 +58,11 @@
    // Render folder tree (sidebar)
    function renderFolderTree(tree, parentPath = '', openPaths = new Set(), highlight = '', folderMatches = {}, fuseQuery = '') {
      let html = '<ul class="pl-2">';
+     // Fix: Ensure tree is always an array
+     if (!Array.isArray(tree)) {
+       html += '</ul>';
+       return html;
+     }
      tree.forEach((entry, idx) => {
        if (entry.type === 'folder') {
          const fullPath = parentPath ? parentPath + '/' + entry.name : entry.name;
@@ -80,7 +87,7 @@
                <span class="truncate">${folderLabel}</span>
              </div>
              <div class="ml-5 transition-all duration-300" style="display:${isOpen ? 'block' : 'none'}" data-folder-children="${fullPath}">
-               ${renderFolderTree(entry.children, fullPath, openPaths, highlight, folderMatches, fuseQuery)}
+               ${renderFolderTree(entry.children || [], fullPath, openPaths, highlight, folderMatches, fuseQuery)}
              </div>
            </li>
          `;
@@ -271,22 +278,29 @@
      flatFiles = flattenFiles(window._sigmaTree);
 
      selectedFolderPath = '';
-     document.getElementById('sigma-tree-list').innerHTML = renderFolderTree(window._sigmaTree, '', new Set(), '', {}, '');
-     document.getElementById('sigma-file-list').innerHTML = renderFileList(window._sigmaTree, '', {}, '');
-     document.getElementById('sigma-breadcrumbs').innerHTML = '';
+     // Fix: Only update DOM if element exists
+     const treeList = document.getElementById('sigma-tree-list');
+     const fileList = document.getElementById('sigma-file-list');
+     const breadcrumbs = document.getElementById('sigma-breadcrumbs');
+     if (treeList) treeList.innerHTML = renderFolderTree(window._sigmaTree, '', new Set(), '', {}, '');
+     if (fileList) fileList.innerHTML = renderFileList(window._sigmaTree, '', {}, '');
+     if (breadcrumbs) breadcrumbs.innerHTML = '';
 
      attachSidebarDropdowns();
 
      const searchInput = document.getElementById('sigma-search');
-     searchInput.addEventListener('input', function() {
-       searchSigmaTree(this.value);
-     });
+     if (searchInput) {
+       searchInput.addEventListener('input', function() {
+         searchSigmaTree(this.value);
+       });
+     }
    });
 
    // --- Export Button Logic ---
    document.addEventListener('DOMContentLoaded', function() {
      const exportBtn = document.getElementById('export-folder-btn');
      function updateExportBtn() {
+       if (!exportBtn) return;
        if (selectedFolderPath) {
          exportBtn.style.display = '';
          exportBtn.onclick = function() {
@@ -296,41 +310,48 @@
          exportBtn.style.display = 'none';
        }
      }
-     const origSelectFolder = selectFolder;
-     selectFolder = function(folderPath) {
-       origSelectFolder(folderPath);
-       updateExportBtn();
-     };
+     if (typeof selectFolder === "function") {
+       const origSelectFolder = selectFolder;
+       selectFolder = function(folderPath) {
+         origSelectFolder(folderPath);
+         updateExportBtn();
+       };
+     }
      updateExportBtn();
    });
 
+   // Prism.js syntax highlighting
    document.addEventListener('DOMContentLoaded', function() {
-  Prism.highlightAll();
+     if (typeof Prism !== "undefined" && Prism.highlightAll) {
+       Prism.highlightAll();
+     }
 
-  var clipboard = new ClipboardJS('#copy-btn');
-  clipboard.on('success', function(e) {
-    var toast = document.getElementById('copy-toast');
-    var btn = document.getElementById('copy-btn');
-    var label = document.getElementById('copy-btn-label');
-    toast.style.display = 'block';
-    btn.classList.add('copy-btn-animate');
-    label.textContent = 'Copied!';
-    setTimeout(function() {
-      toast.style.display = 'none';
-      btn.classList.remove('copy-btn-animate');
-      label.textContent = 'Copy Rule';
-    }, 1200);
-    e.clearSelection();
-  });
-  clipboard.on('error', function() {
-    alert('Copy failed. Please copy manually.');
-  });
+     var clipboard = new ClipboardJS('#copy-btn');
+     clipboard.on('success', function(e) {
+       var toast = document.getElementById('copy-toast');
+       var btn = document.getElementById('copy-btn');
+       var label = document.getElementById('copy-btn-label');
+       if (toast) toast.style.display = 'block';
+       if (btn) btn.classList.add('copy-btn-animate');
+       if (label) label.textContent = 'Copied!';
+       setTimeout(function() {
+         if (toast) toast.style.display = 'none';
+         if (btn) btn.classList.remove('copy-btn-animate');
+         if (label) label.textContent = 'Copy Rule';
+       }, 1200);
+       e.clearSelection();
+     });
+     clipboard.on('error', function() {
+       alert('Copy failed. Please copy manually.');
+     });
 
-  // Keyboard shortcut: Ctrl/Cmd+C when code is focused
-  document.getElementById('rule-content').addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-      document.getElementById('copy-btn').click();
-      e.preventDefault();
-    }
-  });
-});
+     var ruleContent = document.getElementById('rule-content');
+     if (ruleContent) {
+       ruleContent.addEventListener('keydown', function(e) {
+         if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+           document.getElementById('copy-btn').click();
+           e.preventDefault();
+         }
+       });
+     }
+   });

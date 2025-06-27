@@ -8,6 +8,8 @@
       <link href="{{ url_for('static', filename='css/fontawesome.min.css') }}" rel="stylesheet">
       <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
       <script defer src="{{ url_for('static', filename='js/alpine.min.js') }}"></script>
+      <script defer src="{{ url_for('static', filename='js/prism.js') }}"></script>
+      <script defer src="{{ url_for('static', filename='js/clipboard.min.js') }}"></script>
       {% block head %}{% endblock %}
    </head>
    <body class="min-h-screen" x-data="{ sidebarOpen: false }">

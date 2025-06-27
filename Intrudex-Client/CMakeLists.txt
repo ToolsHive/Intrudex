@@ -61,6 +61,7 @@ target_link_libraries(${PROJECT_NAME}
         advapi32
         shell32
         user32
+        Shlwapi.lib
 )
 
 # Add include directories

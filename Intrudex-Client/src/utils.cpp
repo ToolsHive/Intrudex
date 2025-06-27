@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <signal.h>
 #include <string>
+#include <mutex>
 
 // Define the global mutex
 std::mutex log_print_mutex;

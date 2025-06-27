@@ -11,6 +11,7 @@ public:
     ~ApplicationLogCollector();
 
     bool start();
+    void printStatus(const std::string& msg) const;
 
 private:
     std::string apiUrl;

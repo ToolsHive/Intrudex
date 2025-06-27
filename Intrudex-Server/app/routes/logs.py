@@ -8,7 +8,7 @@ from rich.syntax import Syntax
 import xml.etree.ElementTree as ET
 from rich import print as rich_print
 from flask import Blueprint, request, jsonify, render_template_string
-from app.models.logs import SysmonLog, ApplicationLog, SecurityLog, SystemLog
+from app.models.logs import SysmonLog, ApplicationLog, SecurityLog, SystemLog, ClientHost
 
 logs_bp = Blueprint('logs', __name__, url_prefix='/api/logs')
 
@@ -39,6 +39,16 @@ def parse_xml_event_data(xml_data, field_map, namespace):
                 value = default
         data[key] = value
     return data
+
+def get_or_create_client_host(hostname):
+    if not hostname:
+        return None
+    client = ClientHost.query.filter_by(hostname=hostname).first()
+    if not client:
+        client = ClientHost(hostname=hostname)
+        db.session.add(client)
+        db.session.commit()
+    return client
 
 @logs_bp.route('/sysmon', methods=['POST'], strict_slashes=False)
 def sysmon_logs():
@@ -73,7 +83,11 @@ def sysmon_logs():
         event_data = parse_xml_event_data(sanitized_data, field_map, namespace)
         rich_print("[bold magenta][API] Extracted Event Data:[/bold magenta]")
         rich_print(Pretty(event_data, expand_all=True))
-        log = SysmonLog(**event_data)
+        # --- Always get hostname from header first ---
+        hostname = request.headers.get('X-Hostname') or event_data.get('computer') or request.args.get('hostname')
+        client = get_or_create_client_host(hostname)
+        event_data.pop('hostname', None)
+        log = SysmonLog(**event_data, client_id=client.id if client else None)
         db.session.add(log)
         db.session.commit()
         return jsonify({"message": "Log saved successfully"}), 201
@@ -110,7 +124,10 @@ def application_logs():
         event_data = parse_xml_event_data(sanitized_data, field_map, namespace)
         rich_print("[bold magenta][API] Extracted Application Event Data:[/bold magenta]")
         rich_print(Pretty(event_data, expand_all=True))
-        log = ApplicationLog(**event_data)
+        hostname = request.headers.get('X-Hostname') or event_data.get('computer') or request.args.get('hostname')
+        client = get_or_create_client_host(hostname)
+        event_data.pop('hostname', None)
+        log = ApplicationLog(**event_data, client_id=client.id if client else None)
         db.session.add(log)
         db.session.commit()
         return jsonify({"message": "Application log saved successfully"}), 201
@@ -148,7 +165,10 @@ def security_logs():
         event_data = parse_xml_event_data(sanitized_data, field_map, namespace)
         rich_print("[bold magenta][API] Extracted Security Event Data:[/bold magenta]")
         rich_print(Pretty(event_data, expand_all=True))
-        log = SecurityLog(**event_data)
+        hostname = request.headers.get('X-Hostname') or event_data.get('computer') or request.args.get('hostname')
+        client = get_or_create_client_host(hostname)
+        event_data.pop('hostname', None)
+        log = SecurityLog(**event_data, client_id=client.id if client else None)
         db.session.add(log)
         db.session.commit()
         return jsonify({"message": "Security log saved successfully"}), 201
@@ -212,6 +232,8 @@ def system_logs():
             "event_data": event_data
         }, expand_all=True))
 
+        hostname = request.headers.get('X-Hostname') or computer or request.args.get('hostname')
+        client = get_or_create_client_host(hostname)
         log = SystemLog(
             event_id=event_id,
             time_created=time_created,
@@ -223,7 +245,8 @@ def system_logs():
             process_id=process_id,
             thread_id=thread_id,
             user_id=user_id,
-            event_data=event_data
+            event_data=event_data,
+            client_id=client.id if client else None
         )
         db.session.add(log)
         db.session.commit()
@@ -233,7 +256,7 @@ def system_logs():
         return jsonify({"error": f"Failed to parse XML: {str(e)}"}), 400
     except Exception as e:
         rich_print(f"[bold red][API] General Error:[/bold red] {e}")
-    return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @logs_bp.route('/counts', methods=['GET'])
 def get_log_counts():

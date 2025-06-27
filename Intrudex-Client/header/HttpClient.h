@@ -11,6 +11,7 @@ public:
                         bool useHttps = false);
 
     [[nodiscard]] bool sendLog(const std::string& eventData) const;
+    static std::string getHostname();
 
 private:
     std::string serverUrl;
