@@ -168,6 +168,41 @@
         </div>
       </div>
 
+      <!-- Section: AI Integration -->
+      <div class="mb-10">
+        <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">AI Integration</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="md:col-span-2">
+            <label for="ai_api_key" class="block font-semibold mb-2">AI API Key (OpenAI/Anthropic)</label>
+            <div class="flex gap-2">
+              <input type="password" id="ai_api_key" name="ai_api_key" x-model="ai_api_key" 
+                     placeholder="Enter your AI provider API key" 
+                     class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 font-mono focus:ring-2 focus:ring-yellow-400">
+              <button type="button" @click="document.getElementById('ai_api_key').type = document.getElementById('ai_api_key').type === 'password' ? 'text' : 'password'" 
+                      class="px-3 bg-gray-700 text-gray-200 rounded hover:bg-gray-600">
+                <i class="fa fa-eye"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-400 mt-1">API key for AI-powered SIGMA rule generation. Supports OpenAI and Anthropic.</p>
+          </div>
+          <div>
+            <label for="ai_provider" class="block font-semibold mb-2">AI Provider</label>
+            <select id="ai_provider" name="ai_provider" x-model="ai_provider" 
+                    class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+              <option value="openai">OpenAI (GPT-3.5/GPT-4)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+          </div>
+          <div>
+            <label for="ai_model" class="block font-semibold mb-2">AI Model</label>
+            <input type="text" id="ai_model" name="ai_model" x-model="ai_model" 
+                   placeholder="e.g., gpt-3.5-turbo, claude-3-sonnet-20240229"
+                   class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-yellow-300 focus:ring-2 focus:ring-yellow-400">
+            <p class="text-sm text-gray-400 mt-1">Specific model to use for generation.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Section: API Integration -->
       <div class="mb-10">
         <h3 class="text-xl font-bold mb-4 text-yellow-200 border-b border-yellow-400/20 pb-2">API Integration</h3>
@@ -301,6 +336,9 @@ function sigmaSettings() {
     api_enabled: {{ 'true' if settings.api_enabled else 'false' }},
     api_key: "{{ settings.api_key }}",
     client_sync_frequency: {{ settings.client_sync_frequency }},
+    ai_api_key: "{{ settings.get('ai_api_key', '') }}",
+    ai_provider: "{{ settings.get('ai_provider', 'openai') }}",
+    ai_model: "{{ settings.get('ai_model', 'gpt-3.5-turbo') }}",
     sigma_conversion_backend: "{{ settings.get('sigma_conversion_backend', 'json') }}",
     FLASK_RUN_HOST: "{{ settings.get('FLASK_RUN_HOST', '127.0.0.1') }}",
     FLASK_RUN_PORT: "{{ settings.get('FLASK_RUN_PORT', '80') }}",
@@ -373,6 +411,9 @@ function sigmaSettings() {
       this.api_enabled = this.original.api_enabled;
       this.api_key = this.original.api_key;
       this.client_sync_frequency = this.original.client_sync_frequency;
+      this.ai_api_key = this.original.ai_api_key;
+      this.ai_provider = this.original.ai_provider;
+      this.ai_model = this.original.ai_model;
       this.FLASK_RUN_HOST = this.original.FLASK_RUN_HOST;
       this.FLASK_RUN_PORT = this.original.FLASK_RUN_PORT;
       this.FLASK_DEBUG = this.original.FLASK_DEBUG;
@@ -393,6 +434,9 @@ function sigmaSettings() {
         api_enabled: this.api_enabled,
         api_key: this.api_key,
         client_sync_frequency: this.client_sync_frequency,
+        ai_api_key: this.ai_api_key,
+        ai_provider: this.ai_provider,
+        ai_model: this.ai_model,
         FLASK_RUN_HOST: this.FLASK_RUN_HOST,
         FLASK_RUN_PORT: this.FLASK_RUN_PORT,
         FLASK_DEBUG: this.FLASK_DEBUG,
