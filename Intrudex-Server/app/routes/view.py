@@ -60,7 +60,14 @@ def view_log_table(log_type):
             self.next_num = page + 1
 
     pagination = Pagination(page, per_page, total)
-    return render_template('view/log_table.html', logs=logs, pagination=pagination, log_type=log_type)
+    
+    # Check if this is an HTMX request (partial) or direct access (full page)
+    if request.headers.get('HX-Request'):
+        # HTMX request - return just the table fragment
+        return render_template('view/log_table.html', logs=logs, pagination=pagination, log_type=log_type)
+    else:
+        # Direct access - return full page with layout
+        return render_template('view/index_with_table.html', logs=logs, pagination=pagination, log_type=log_type)
 
 @view_bp.route('/<log_type>/<int:log_id>')
 def view_log_detail(log_type, log_id):

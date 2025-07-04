@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}View {{ log_type.capitalize() }} Logs{% endblock %}
+{% block head %}
+    <style>
+        body{
+            overflow: hidden !important;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4">
+    <div class="flex justify-center mb-8">
+        <nav class="bg-gray-800 rounded-full shadow-lg px-2 py-2 flex gap-2" id="log-type-nav">
+            <a href="/view/sysmon"
+               class="px-5 py-2 rounded-full font-semibold transition-all duration-200
+               {% if log_type == 'sysmon' %}bg-blue-700 text-white shadow-lg scale-105{% else %}text-blue-300 hover:bg-blue-900 hover:text-white{% endif %}"
+               data-logtype="sysmon"
+               hx-get="/view/sysmon" hx-target="#log-table" hx-push-url="true">
+                <i class="fa-solid fa-microchip mr-2"></i>Sysmon
+            </a>
+            <a href="/view/system"
+               class="px-5 py-2 rounded-full font-semibold transition-all duration-200
+               {% if log_type == 'system' %}bg-red-700 text-white shadow-lg scale-105{% else %}text-red-300 hover:bg-red-900 hover:text-white{% endif %}"
+               data-logtype="system"
+               hx-get="/view/system" hx-target="#log-table" hx-push-url="true">
+                <i class="fa-solid fa-server mr-2"></i>System
+            </a>
+            <a href="/view/application"
+               class="px-5 py-2 rounded-full font-semibold transition-all duration-200
+               {% if log_type == 'application' %}bg-green-700 text-white shadow-lg scale-105{% else %}text-green-300 hover:bg-green-900 hover:text-white{% endif %}"
+               data-logtype="application"
+               hx-get="/view/application" hx-target="#log-table" hx-push-url="true">
+                <i class="fa-solid fa-rocket mr-2"></i>Application
+            </a>
+            <a href="/view/security"
+               class="px-5 py-2 rounded-full font-semibold transition-all duration-200
+               {% if log_type == 'security' %}bg-purple-700 text-white shadow-lg scale-105{% else %}text-purple-300 hover:bg-purple-900 hover:text-white{% endif %}"
+               data-logtype="security"
+               hx-get="/view/security" hx-target="#log-table" hx-push-url="true">
+                <i class="fa-solid fa-shield-halved mr-2"></i>Security
+            </a>
+        </nav>
+    </div>
+    <div id="log-table">
+        {% include 'view/log_table.html' %}
+    </div>
+    <!-- Modal for details -->
+    <div id="view-modal" x-data="{ open: false, content: '' }" x-show="open" class="fixed inset-0 bg-transparent backdrop-grayscale-55 bg-opacity-50 flex items-center justify-center z-50" style="display:none;">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
+            <button class="absolute top-2 right-4 text-2xl" @click="open=false" onclick="closeViewModal()">&times;</button>
+            <div x-html="content"></div>
+        </div>
+    </div>
+<script src="{{ url_for('static', filename='js/view_full.js') }}"></script>
+</div>
+{% endblock %}
