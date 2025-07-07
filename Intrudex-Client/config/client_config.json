@@ -18,5 +18,6 @@
     "user_agent": "Intrudex Client/1.0",
     "content_type": "application/xml",
     "use_https": false
-  }
+  },
+  "default_flag": "background"
 }
