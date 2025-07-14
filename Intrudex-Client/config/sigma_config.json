@@ -1,0 +1,8 @@
+{
+  "api_base_url": "http://localhost/sigma/api",
+  "headers": {
+    "X-API-Key": "your_api_key",
+    "Authorization": "Bearer your_token",
+    "Accept": "application/json"
+  }
+}

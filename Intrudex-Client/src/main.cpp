@@ -18,6 +18,7 @@
 #include "../header/ApplicationLogCollector.h"
 #include "../header/SecurityLogCollector.h"
 #include "../header/SystemLogCollector.h"
+#include "../header/SigmaManager.h"
 
 #include "../includes/json.hpp"
 #include "../includes/cxxopts.hpp"
@@ -378,6 +379,26 @@ int main(int argc, char* argv[]) {
         std::string exeDir = getExecutableDirectory();
         std::string sysmonExe = exeDir + "\\" + config["sysmon_exe_path"].get<std::string>();
         std::string sysmonCfg = exeDir + "\\" + config["sysmon_config_path"].get<std::string>();
+
+        // Initialize SigmaManager and update rules
+        try {
+            // Get Windows temp directory for rules
+            char tempPath[MAX_PATH];
+            GetTempPathA(MAX_PATH, tempPath);
+            std::string rulesDir = std::string(tempPath) + "intrudex_rules";
+
+            // Create the directory if it doesn't exist
+            if (!std::filesystem::exists(rulesDir)) {
+                std::filesystem::create_directories(rulesDir);
+            }
+
+            // Use temp directory for rules
+            SigmaManager sigma("config/sigma_config.json", rulesDir);
+            sigma.updateRules();  // Only fetches new rules
+            std::cout << "[+] Rules directory: " << rulesDir << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Error updating rules: " << e.what() << std::endl;
+        }
 
         // Normalize path slashes for Windows
         std::replace(sysmonExe.begin(), sysmonExe.end(), '/', '\\');

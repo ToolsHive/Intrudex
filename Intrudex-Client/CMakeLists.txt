@@ -51,6 +51,7 @@ add_executable(${PROJECT_NAME}
         src/SecurityHttpSender.cpp
         src/SystemLogCollector.cpp
         src/SystemHttpSender.cpp
+        src/SigmaManager.cpp
 )
 
 # Link Windows Event API
@@ -62,6 +63,7 @@ target_link_libraries(${PROJECT_NAME}
         shell32
         user32
         Shlwapi.lib
+        wininet.lib
 )
 
 # Add include directories
