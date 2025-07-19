@@ -694,3 +694,35 @@ def get_security_alert_detail(alert_id):
     <div class="modal-row"><span class="modal-label">Caller Process:</span> {log.caller_process_name or ''}</div>
     """
     return html
+
+
+@logs_bp.route('/<string:log_type>/<int:log_id>', methods=['GET'])
+def get_log_detail_by_type(log_type, log_id):
+    """Generic endpoint that maps log type names to the appropriate handler"""
+    # Map the log type name (from class name) to the correct endpoint handler
+    type_map = {
+        'sysmonlog': get_sysmon_log_detail,
+        'applicationlog': get_application_log_detail,
+        'securitylog': get_security_log_detail,
+        'systemlog': get_system_log_detail
+    }
+
+    # Get the appropriate handler function or 404 if not found
+    handler = type_map.get(log_type.lower())
+    if handler:
+        return handler(log_id)
+    else:
+        # Try direct mapping as fallback
+        direct_map = {
+            'sysmon': get_sysmon_log_detail,
+            'application': get_application_log_detail,
+            'security': get_security_log_detail,
+            'system': get_system_log_detail
+        }
+        handler = direct_map.get(log_type.lower())
+        if handler:
+            return handler(log_id)
+
+    # If we get here, no handler was found
+    from flask import abort
+    abort(404, f"Log type '{log_type}' not found")

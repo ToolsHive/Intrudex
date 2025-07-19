@@ -1,0 +1,367 @@
+<!-- DEBUG: Template received {{ events|length }} events -->
+{% if events %}
+    <!-- DEBUG: Events found, rendering {{ events|length }} events -->
+    {% for event in events %}
+    <div class="group bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-8 shadow-2xl border 
+         {% if event.severity == 'critical' %}border-red-500/30 hover:border-red-400/50 hover:shadow-red-500/20
+         {% elif event.severity == 'high' %}border-orange-500/30 hover:border-orange-400/50 hover:shadow-orange-500/20
+         {% elif event.severity == 'medium' %}border-yellow-500/30 hover:border-yellow-400/50 hover:shadow-yellow-500/20
+         {% else %}border-blue-500/30 hover:border-blue-400/50 hover:shadow-blue-500/20{% endif %} 
+         transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm animate-fadeInUp">
+        
+        <!-- Enhanced Event Header -->
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="bg-gradient-to-br 
+                    {% if event.severity == 'critical' %}from-red-500/20 to-red-600/20 border-red-500/30
+                    {% elif event.severity == 'high' %}from-orange-500/20 to-orange-600/20 border-orange-500/30
+                    {% elif event.severity == 'medium' %}from-yellow-500/20 to-yellow-600/20 border-yellow-500/30
+                    {% else %}from-blue-500/20 to-blue-600/20 border-blue-500/30{% endif %}
+                    rounded-xl p-3 border shadow-lg">
+                    <i class="fas fa-shield-alt 
+                        {% if event.severity == 'critical' %}text-red-400
+                        {% elif event.severity == 'high' %}text-orange-400
+                        {% elif event.severity == 'medium' %}text-yellow-400
+                        {% else %}text-blue-400{% endif %} text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700/50 text-gray-300 border border-gray-600/50">
+                            <i class="fas fa-hashtag mr-2"></i>
+                            Event #{{ event.id }}
+                        </span>
+                        {% if event.severity %}
+                        <span class="px-3 py-1.5 rounded-xl text-sm font-bold inline-flex items-center shadow-lg
+                            {% if event.severity == 'critical' %}bg-gradient-to-r from-red-500/30 to-red-600/30 text-red-200 border border-red-400/40
+                            {% elif event.severity == 'high' %}bg-gradient-to-r from-orange-500/30 to-orange-600/30 text-orange-200 border border-orange-400/40
+                            {% elif event.severity == 'medium' %}bg-gradient-to-r from-yellow-500/30 to-yellow-600/30 text-yellow-200 border border-yellow-400/40
+                            {% else %}bg-gradient-to-r from-blue-500/30 to-blue-600/30 text-blue-200 border border-blue-400/40{% endif %}">
+                            {% if event.severity == 'critical' %}<i class="fas fa-exclamation-triangle mr-2"></i>
+                            {% elif event.severity == 'high' %}<i class="fas fa-fire mr-2"></i>
+                            {% elif event.severity == 'medium' %}<i class="fas fa-exclamation mr-2"></i>
+                            {% else %}<i class="fas fa-info-circle mr-2"></i>{% endif %}
+                            {{ event.severity|upper }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <span class="inline-flex items-center text-gray-300">
+                            <i class="fas fa-clock mr-2 text-cyan-400"></i>
+                            {% if event.time_created is string %}
+                                {{ event.time_created }}
+                            {% else %}
+                                {{ event.time_created.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% endif %}
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-600/30 text-gray-300 border border-gray-600/50">
+                            {% if event.log_type == 'sysmon' %}<i class="fas fa-cogs mr-1 text-purple-400"></i>
+                            {% elif event.log_type == 'security' %}<i class="fas fa-lock mr-1 text-red-400"></i>
+                            {% elif event.log_type == 'application' %}<i class="fas fa-desktop mr-1 text-green-400"></i>
+                            {% elif event.log_type == 'system' %}<i class="fas fa-server mr-1 text-blue-400"></i>
+                            {% else %}<i class="fas fa-file-alt mr-1"></i>{% endif %}
+                            {{ event.log_type|upper }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced System Information -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30 hover:border-gray-500/50 transition-all duration-200">
+                <div class="flex items-center mb-2">
+                    <div class="bg-green-500/20 rounded-lg p-2 mr-3">
+                        <i class="fas fa-desktop text-green-400"></i>
+                    </div>
+                    <span class="text-gray-300 text-sm font-semibold">Computer</span>
+                </div>
+                <span class="text-white font-bold text-lg">{{ event.computer }}</span>
+            </div>
+            
+            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30 hover:border-gray-500/50 transition-all duration-200">
+                <div class="flex items-center mb-2">
+                    <div class="bg-blue-500/20 rounded-lg p-2 mr-3">
+                        <i class="fas fa-user text-blue-400"></i>
+                    </div>
+                    <span class="text-gray-300 text-sm font-semibold">User</span>
+                </div>
+                <span class="text-white font-bold text-lg">{{ event.user }}</span>
+            </div>
+            
+            {% if event.process %}
+            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30 hover:border-gray-500/50 transition-all duration-200">
+                <div class="flex items-center mb-2">
+                    <div class="bg-purple-500/20 rounded-lg p-2 mr-3">
+                        <i class="fas fa-cog text-purple-400"></i>
+                    </div>
+                    <span class="text-gray-300 text-sm font-semibold">Process</span>
+                </div>
+                <span class="text-white font-bold text-lg font-mono">{{ event.process }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Enhanced Additional Details -->
+        {% if event.process_id or event.event_id or event.domain or event.service %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {% if event.event_id %}
+            <div class="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30 hover:border-blue-400/50 transition-all duration-200">
+                <div class="flex items-center">
+                    <div class="bg-blue-500/20 rounded-lg p-1.5 mr-2">
+                        <i class="fas fa-tag text-blue-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-xs font-medium">Event ID</span>
+                        <div class="text-blue-300 font-bold">{{ event.event_id }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if event.process_id %}
+            <div class="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30 hover:border-green-400/50 transition-all duration-200">
+                <div class="flex items-center">
+                    <div class="bg-green-500/20 rounded-lg p-1.5 mr-2">
+                        <i class="fas fa-hashtag text-green-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-xs font-medium">Process ID</span>
+                        <div class="text-green-300 font-bold">{{ event.process_id }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if event.domain %}
+            <div class="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30 hover:border-purple-400/50 transition-all duration-200">
+                <div class="flex items-center">
+                    <div class="bg-purple-500/20 rounded-lg p-1.5 mr-2">
+                        <i class="fas fa-globe text-purple-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-xs font-medium">Domain</span>
+                        <div class="text-purple-300 font-bold">{{ event.domain }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if event.service %}
+            <div class="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30 hover:border-cyan-400/50 transition-all duration-200">
+                <div class="flex items-center">
+                    <div class="bg-cyan-500/20 rounded-lg p-1.5 mr-2">
+                        <i class="fas fa-tools text-cyan-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-xs font-medium">Service</span>
+                        <div class="text-cyan-300 font-bold">{{ event.service }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Enhanced Matched Rules Section -->
+        <div class="bg-gradient-to-r from-gray-700/30 to-gray-800/30 rounded-xl border border-gray-600/30 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="bg-yellow-500/20 rounded-lg p-2 mr-3">
+                        <i class="fas fa-search text-yellow-400"></i>
+                    </div>
+                    <h3 class="text-white font-semibold text-lg">Detection Rules</h3>
+                    <span class="ml-3 px-3 py-1.5 bg-yellow-500/20 text-yellow-300 text-sm font-bold rounded-full border border-yellow-400/30">
+                        {{ event.matched_rules|length }} match{{ 'es' if event.matched_rules|length != 1 else '' }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                {% for rule in event.matched_rules %}
+                <div class="bg-gray-800/40 rounded-lg p-4 border 
+                    {% if rule.level == 'critical' %}border-red-500/30 hover:border-red-400/50
+                    {% elif rule.level == 'high' %}border-orange-500/30 hover:border-orange-400/50
+                    {% elif rule.level == 'medium' %}border-yellow-500/30 hover:border-yellow-400/50
+                    {% elif rule.level == 'low' %}border-blue-500/30 hover:border-blue-400/50
+                    {% else %}border-gray-600/30 hover:border-gray-500/50{% endif %}
+                    transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg">
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-gradient-to-br 
+                                {% if rule.level == 'critical' %}from-red-500/20 to-red-600/20 border-red-400/30
+                                {% elif rule.level == 'high' %}from-orange-500/20 to-orange-600/20 border-orange-400/30
+                                {% elif rule.level == 'medium' %}from-yellow-500/20 to-yellow-600/20 border-yellow-400/30
+                                {% elif rule.level == 'low' %}from-blue-500/20 to-blue-600/20 border-blue-400/30
+                                {% else %}from-gray-500/20 to-gray-600/20 border-gray-400/30{% endif %}
+                                rounded-lg p-2 border">
+                                <i class="fas fa-shield-alt 
+                                    {% if rule.level == 'critical' %}text-red-400
+                                    {% elif rule.level == 'high' %}text-orange-400
+                                    {% elif rule.level == 'medium' %}text-yellow-400
+                                    {% elif rule.level == 'low' %}text-blue-400
+                                    {% else %}text-gray-400{% endif %} text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-semibold text-lg">{{ rule.title }}</h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="px-2 py-1 rounded-full text-xs font-bold border
+                                        {% if rule.level == 'critical' %}bg-red-500/20 text-red-300 border-red-400/40
+                                        {% elif rule.level == 'high' %}bg-orange-500/20 text-orange-300 border-orange-400/40
+                                        {% elif rule.level == 'medium' %}bg-yellow-500/20 text-yellow-300 border-yellow-400/40
+                                        {% elif rule.level == 'low' %}bg-blue-500/20 text-blue-300 border-blue-400/40
+                                        {% else %}bg-gray-500/20 text-gray-300 border-gray-400/40{% endif %}">
+                                        {{ rule.level|upper if rule.level else 'INFO' }}
+                                    </span>
+                                    <span class="text-gray-400 text-xs">ID: {{ rule.id }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if rule.description %}
+                    <p class="text-gray-300 text-sm mb-3 leading-relaxed">{{ rule.description }}</p>
+                    {% endif %}
+                    
+                    {% if rule.tags %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in rule.tags[:5] %}
+                        <span class="px-2 py-1 bg-gray-700/50 text-gray-300 text-xs rounded-full border border-gray-600/50">
+                            {{ tag }}
+                        </span>
+                        {% endfor %}
+                        {% if rule.tags|length > 5 %}
+                        <span class="px-2 py-1 bg-gray-700/50 text-gray-400 text-xs rounded-full border border-gray-600/50">
+                            +{{ rule.tags|length - 5 }} more
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Enhanced Event Details and Actions -->
+        <div class="bg-gradient-to-r from-gray-700/30 to-gray-800/30 rounded-xl border border-gray-600/30 p-6">
+            <div class="flex justify-between items-start">
+                <div class="flex-1 mr-6">
+                    <div class="flex items-start mb-3">
+                        <div class="bg-blue-500/20 rounded-lg p-2 mr-3 flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-2">Event Details</h4>
+                            <p class="text-gray-300 text-sm leading-relaxed">{{ event.details }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if event.process_path %}
+                    <div class="flex items-start">
+                        <div class="bg-orange-500/20 rounded-lg p-2 mr-3 flex-shrink-0">
+                            <i class="fas fa-folder-open text-orange-400"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-gray-400 text-xs font-semibold mb-1">Process Path</h5>
+                            <p class="text-gray-300 text-sm font-mono bg-gray-800/40 px-3 py-2 rounded-lg border border-gray-600/30">
+                                {{ event.process_path }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-shrink-0">
+                    <a href="{{ url_for('sigmarules.event_details', log_type=event.log_type, log_id=event.log_id) }}"
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl 
+                       hover:from-blue-500 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 
+                       shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 group">
+                        <i class="fas fa-eye mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                        <span>View Details</span>
+                        <i class="fas fa-chevron-right ml-2 group-hover:translate-x-0.5 transition-transform duration-200"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <!-- DEBUG: No events found, showing empty state -->
+    <!-- Enhanced No Events Found -->
+    <div class="text-center py-16">
+        <div class="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-12 inline-block shadow-2xl border border-gray-700/50 backdrop-blur-sm">
+            <div class="mb-6">
+                <div class="bg-gray-700/30 rounded-full p-6 inline-flex border border-gray-600/30">
+                    <i class="fas fa-search text-gray-500 text-6xl"></i>
+                </div>
+            </div>
+            <h3 class="text-gray-300 text-2xl font-bold mb-3">No Flagged Events Found</h3>
+            <p class="text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
+                No security events have triggered the detection rules. This could mean your system is secure, 
+                or you may need to adjust your Sigma rules configuration.
+            </p>
+            <div class="flex items-center justify-center space-x-4 text-sm">
+                <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg border border-gray-600/30">
+                    <i class="fas fa-cogs mr-2 text-cyan-400"></i>
+                    Check Sigma Rules
+                </div>
+                <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg border border-gray-600/30">
+                    <i class="fas fa-file-alt mr-2 text-blue-400"></i>
+                    Review Log Sources
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Enhanced Pagination -->
+{% if has_more or page > 1 %}
+<div class="flex justify-center items-center space-x-6 my-12 py-6 bg-gradient-to-r from-gray-800/90 to-gray-900/90 rounded-2xl shadow-2xl border border-gray-700/50 backdrop-blur-sm">
+    {% if page > 1 %}
+    <a href="{{ url_for('sigmarules.flagged_events') }}?page={{ page - 1 }}"
+       class="inline-flex items-center px-8 py-4 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 
+       rounded-xl hover:from-blue-500 hover:to-blue-600 focus:ring-4 focus:ring-blue-300/50 transition-all duration-200 
+       shadow-lg hover:shadow-blue-500/25 transform hover:scale-105 group">
+        <i class="fas fa-chevron-left mr-2 group-hover:-translate-x-0.5 transition-transform duration-200"></i>
+        Previous
+    </a>
+    {% else %}
+    <div class="inline-flex items-center px-8 py-4 text-sm font-semibold text-gray-500 bg-gray-700/30 rounded-xl cursor-not-allowed border border-gray-600/30">
+        <i class="fas fa-chevron-left mr-2"></i>
+        Previous
+    </div>
+    {% endif %}
+    
+    <div class="flex items-center space-x-3">
+        <span class="text-gray-300 text-sm font-semibold">Page</span>
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg border border-blue-500/30">
+            {{ page }}
+        </div>
+    </div>
+    
+    {% if has_more %}
+    <a href="{{ url_for('sigmarules.flagged_events') }}?page={{ page + 1 }}"
+       class="inline-flex items-center px-8 py-4 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 
+       rounded-xl hover:from-blue-500 hover:to-blue-600 focus:ring-4 focus:ring-blue-300/50 transition-all duration-200 
+       shadow-lg hover:shadow-blue-500/25 transform hover:scale-105 group">
+        Next
+        <i class="fas fa-chevron-right ml-2 group-hover:translate-x-0.5 transition-transform duration-200"></i>
+    </a>
+    {% else %}
+    <div class="inline-flex items-center px-8 py-4 text-sm font-semibold text-gray-500 bg-gray-700/30 rounded-xl cursor-not-allowed border border-gray-600/30">
+        Next
+        <i class="fas fa-chevron-right ml-2"></i>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Enhanced Error Display -->
+{% if error %}
+<div class="bg-gradient-to-r from-red-900/90 to-red-800/90 text-red-100 p-6 rounded-2xl mb-6 shadow-2xl border border-red-700/50 backdrop-blur-sm">
+    <div class="flex items-center mb-3">
+        <div class="bg-red-500/20 rounded-lg p-2 mr-3">
+            <i class="fas fa-exclamation-triangle text-red-400 text-lg"></i>
+        </div>
+        <h3 class="font-bold text-lg">Error Loading Events</h3>
+    </div>
+    <p class="text-red-200 ml-11">{{ error }}</p>
+</div>
+{% endif %}

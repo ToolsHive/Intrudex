@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+{% block title %}Flagged Events{% endblock %}
+
+{% block head %}
+<style>
+/* Enhanced animations and effects */
+@keyframes pulse-border {
+    0% { border-color: rgba(59, 130, 246, 0.4); }
+    50% { border-color: rgba(59, 130, 246, 0.8); }
+    100% { border-color: rgba(59, 130, 246, 0.4); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.fade-out {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-6 px-4 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
+    <div class="max-w-7xl mx-auto">
+        <!-- Enhanced Header Section -->
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-gray-800/90 to-gray-700/90 rounded-2xl p-8 border border-gray-600/30 shadow-2xl backdrop-blur-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-6">
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 shadow-lg">
+                            <i class="fas fa-flag text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                                Flagged Events
+                            </h1>
+                            <p class="text-gray-300 text-lg font-medium">Security events detected by Sigma rules</p>
+                            <div class="flex items-center space-x-4 mt-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-300 border border-red-500/30">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Active Monitoring
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
+                                    Real-time Detection
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Navigation -->
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('sigmarules.index') }}" 
+                           class="group text-blue-400 hover:text-blue-300 inline-flex items-center bg-gradient-to-r from-blue-900/30 to-blue-800/30 px-6 py-3 rounded-xl hover:from-blue-800/40 hover:to-blue-700/40 transition-all duration-300 border border-blue-700/30 hover:border-blue-600/50 shadow-lg hover:shadow-blue-500/10">
+                            <i class="fas fa-arrow-left mr-3 group-hover:-translate-x-1 transition-transform duration-200"></i> 
+                            <span class="font-semibold">Back to Dashboard</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Rule Compilation Progress -->
+        <div id="rule-status" class="mb-8">
+            <div class="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl border border-blue-500/20 p-6 shadow-2xl backdrop-blur-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-500/20 rounded-lg p-2">
+                            <i class="fas fa-cogs text-blue-400 text-lg"></i>
+                        </div>
+                        <span class="text-white font-semibold text-lg">Loading Detection Rules</span>
+                    </div>
+                    <span id="progress-text" class="text-blue-400 font-bold text-lg">0%</span>
+                </div>
+                <div class="w-full bg-gray-700/50 rounded-full h-3 mb-4 border border-gray-600/50">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 shadow-lg" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span id="status-text" class="text-blue-200 font-medium">Initializing rule engine...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Skeleton Loading -->
+        <div id="skeleton-loading" class="animate-pulse space-y-6">
+            {% for i in range(4) %}
+            <div class="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-8 shadow-xl border border-gray-600/30 backdrop-blur-sm">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-700/50 rounded-xl shimmer"></div>
+                        <div>
+                            <div class="w-48 h-6 bg-gray-700/50 rounded-lg mb-2 shimmer"></div>
+                            <div class="w-32 h-4 bg-gray-700/50 rounded shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="w-24 h-8 bg-gray-700/50 rounded-full shimmer"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                        <div class="w-24 h-4 bg-gray-700/50 rounded mb-3 shimmer"></div>
+                        <div class="w-36 h-6 bg-gray-700/50 rounded shimmer"></div>
+                    </div>
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                        <div class="w-20 h-4 bg-gray-700/50 rounded mb-3 shimmer"></div>
+                        <div class="w-28 h-6 bg-gray-700/50 rounded shimmer"></div>
+                    </div>
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                        <div class="w-16 h-4 bg-gray-700/50 rounded mb-3 shimmer"></div>
+                        <div class="w-32 h-6 bg-gray-700/50 rounded shimmer"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="w-32 h-5 bg-gray-700/50 rounded mb-4 shimmer"></div>
+                    <div class="flex flex-wrap gap-3">
+                        <div class="w-24 h-8 bg-gray-700/50 rounded-full shimmer"></div>
+                        <div class="w-32 h-8 bg-gray-700/50 rounded-full shimmer"></div>
+                        <div class="w-28 h-8 bg-gray-700/50 rounded-full shimmer"></div>
+                        <div class="w-20 h-8 bg-gray-700/50 rounded-full shimmer"></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center pt-4 border-t border-gray-700/50">
+                    <div class="w-28 h-5 bg-gray-700/50 rounded shimmer"></div>
+                    <div class="w-36 h-10 bg-gray-700/50 rounded-lg shimmer"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Enhanced Events Container -->
+        <div id="events-container" class="space-y-6 hidden">
+            <!-- Events will be loaded here via HTMX -->
+        </div>
+
+        <!-- Enhanced Loading Indicator -->
+        <div id="loading-indicator" class="htmx-indicator fixed bottom-6 right-6 z-50">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl shadow-2xl border border-blue-500/30 backdrop-blur-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </div>
+                    <div>
+                        <div class="text-white font-semibold">Loading Events</div>
+                        <div class="text-blue-200 text-sm">Analyzing security data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced No Events Message -->
+        <div id="no-events" class="hidden">
+            <div class="text-center py-16">
+                <div class="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-12 inline-block shadow-2xl border border-gray-600/30 backdrop-blur-sm">
+                    <div class="bg-gray-700/50 rounded-full p-8 w-24 h-24 mx-auto mb-8 flex items-center justify-center">
+                        <i class="fas fa-search text-gray-400 text-4xl"></i>
+                    </div>
+                    <h3 class="text-gray-300 text-2xl font-bold mb-4">No Flagged Events Found</h3>
+                    <p class="text-gray-400 text-lg mb-6 max-w-md">
+                        No security events have been detected by the current Sigma rules. This could indicate normal system activity.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="{{ url_for('sigmarules.run_rules') }}" 
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-blue-500/25">
+                            <i class="fas fa-play mr-2"></i>
+                            Run Analysis
+                        </a>
+                        <a href="{{ url_for('sigmarules.index') }}" 
+                           class="inline-flex items-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced loading sequence for better UX
+let progress = 0;
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+const statusText = document.getElementById('status-text');
+let progressCompleted = false;
+let progressAnimationInterval;
+let progressCheckInterval;
+let currentStep = 0;
+
+// Loading steps with messages
+const loadingSteps = [
+    { progress: 10, message: "Initializing rule engine..." },
+    { progress: 25, message: "Loading Sigma rules..." },
+    { progress: 40, message: "Compiling detection logic..." },
+    { progress: 60, message: "Scanning recent logs..." },
+    { progress: 80, message: "Matching events against rules..." },
+    { progress: 95, message: "Finalizing results..." },
+    { progress: 100, message: "Complete!" }
+];
+
+// Function to check real progress from server (simplified)
+function checkServerProgress() {
+    // Simplified - just increment progress for demo
+    progress += 15;
+    if (progress >= 100) {
+        completeProgress();
+    } else {
+        updateProgressUI();
+    }
+}
+
+// Accelerate progress to show activity immediately
+function animateProgress() {
+    if (progressCompleted) return;
+    
+    // Update to next step if available
+    if (currentStep < loadingSteps.length - 1) {
+        const nextStep = loadingSteps[currentStep + 1];
+        if (progress >= loadingSteps[currentStep].progress) {
+            currentStep++;
+            if (statusText) {
+                statusText.textContent = loadingSteps[currentStep].message;
+            }
+        }
+    }
+    
+    // Start slow, then accelerate - but stay under server's true value
+    if (progress < 30) {
+        progress += 1.5;
+    } else if (progress < 60) {
+        progress += 1;
+    } else if (progress < 90) {
+        progress += 0.5;
+    } else {
+        progress += 0.2;
+    }
+    
+    // Hold at 95% until actual completion
+    if (progress > 95) progress = 95;
+    
+    updateProgressUI();
+}
+
+function updateProgressUI() {
+    // Update UI
+    const roundedProgress = Math.round(progress);
+    if (progressBar) {
+        progressBar.style.width = roundedProgress + '%';
+    }
+    if (progressText) {
+        progressText.textContent = roundedProgress + '%';
+    }
+}
+
+function completeProgress() {
+    progressCompleted = true;
+    progress = 100;
+    currentStep = loadingSteps.length - 1;
+    updateProgressUI();
+    
+    if (statusText) {
+        statusText.textContent = "Complete!";
+    }
+    
+    // Hide the progress bar after a delay
+    setTimeout(() => {
+        const ruleStatus = document.getElementById('rule-status');
+        if (ruleStatus) {
+            ruleStatus.classList.add('fade-out');
+            
+            setTimeout(() => {
+                ruleStatus.style.display = 'none';
+            }, 1000);
+        }
+    }, 3000);
+    
+    // Clear intervals
+    if (progressAnimationInterval) {
+        clearInterval(progressAnimationInterval);
+    }
+    if (progressCheckInterval) {
+        clearInterval(progressCheckInterval);
+    }
+}
+
+// Initialize progress animation with faster completion
+function startLoadingSequence() {
+    updateProgressUI();
+    
+    // Much faster progress animation
+    progressAnimationInterval = setInterval(() => {
+        if (progressCompleted) return;
+        
+        progress += 10;  // Much faster increments
+        if (progress >= 100) {
+            completeProgress();
+        } else {
+            updateProgressUI();
+        }
+    }, 200);  // Update every 200ms
+    
+    // Load events immediately (no delay)
+    setTimeout(() => {
+        loadEvents();
+    }, 500);  // Very short delay
+}
+
+// Function to load events - FIXED VERSION
+let eventsLoaded = false; // Prevent duplicate loading
+
+function loadEvents(pageNum = 1) {
+    if (eventsLoaded && pageNum === 1) {
+        return;
+    }
+    
+    if (pageNum === 1) eventsLoaded = true;
+    
+    console.log('Loading events for page:', pageNum);
+    
+    // Make AJAX request with proper headers for partial content
+    fetch(`{{ url_for('sigmarules.flagged_events') }}?page=${pageNum}`, {
+        method: 'GET',
+        headers: {
+            'HX-Request': 'true',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'text/html'
+        }
+    })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            console.log('Received HTML length:', html.length);
+            console.log('HTML preview:', html.substring(0, 200));
+            
+            const eventsContainer = document.getElementById('events-container');
+            const skeletonLoading = document.getElementById('skeleton-loading');
+            const noEvents = document.getElementById('no-events');
+            
+            // Hide skeleton loading
+            if (skeletonLoading) {
+                skeletonLoading.classList.add('hidden');
+            }
+            
+            // Show events container
+            if (eventsContainer) {
+                eventsContainer.innerHTML = html;
+                eventsContainer.classList.remove('hidden');
+                
+                // Add click handlers for pagination links
+                setupPaginationHandlers();
+            }
+            
+            // Complete progress animation
+            if (pageNum === 1) completeProgress();
+            
+            // Check if any events were loaded - look for event cards more broadly
+            const eventDivs = eventsContainer ? eventsContainer.querySelectorAll('[class*="bg-gradient-to-br"], [class*="bg-gray-8"]') : [];
+            console.log('Found event divs:', eventDivs.length);
+            
+            if (eventDivs.length === 0) {
+                console.log('No events found, showing no-events message');
+                if (eventsContainer) {
+                    eventsContainer.classList.add('hidden');
+                }
+                if (noEvents) {
+                    noEvents.classList.remove('hidden');
+                }
+            } else {
+                console.log('Events found, hiding no-events message');
+                if (noEvents) {
+                    noEvents.classList.add('hidden');
+                }
+            }
+            
+            // Scroll to top for new pages
+            if (pageNum > 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading events:', error);
+            if (pageNum === 1) eventsLoaded = false; // Reset flag on error
+            handleLoadingError(error);
+        });
+}
+
+// Setup pagination handlers
+function setupPaginationHandlers() {
+    const paginationLinks = document.querySelectorAll('a[href*="page="]');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = new URL(this.href);
+            const pageNum = parseInt(url.searchParams.get('page')) || 1;
+            loadEvents(pageNum);
+        });
+    });
+}
+
+// Handle loading errors
+function handleLoadingError(error) {
+    const skeletonLoading = document.getElementById('skeleton-loading');
+    const eventsContainer = document.getElementById('events-container');
+    
+    // Hide loading indicators
+    if (skeletonLoading) {
+        skeletonLoading.classList.add('hidden');
+    }
+    
+    // Complete progress on error
+    completeProgress();
+    
+    // Show events container but with an error message
+    if (eventsContainer) {
+        eventsContainer.classList.remove('hidden');
+        eventsContainer.innerHTML = `
+            <div class="bg-red-900 text-red-100 p-4 rounded-lg mb-4">
+                <p class="font-bold">Error loading events:</p>
+                <p>${error.message || 'Server returned an error. Please check the server logs.'}</p>
+                <p class="text-sm mt-2">Try reloading the page or contact an administrator.</p>
+                <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                    Reload Page
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Start the loading sequence when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, starting event loading sequence');
+    
+    // Start loading sequence immediately
+    startLoadingSequence();
+    
+    // Also trigger immediate loading for instant results
+    setTimeout(() => {
+        console.log('Triggering loadEvents');
+        loadEvents();
+    }, 100);
+    
+    // Fallback: If no events load after 5 seconds, try direct loading
+    setTimeout(() => {
+        const eventsContainer = document.getElementById('events-container');
+        const skeletonLoading = document.getElementById('skeleton-loading');
+        
+        if (eventsContainer && eventsContainer.innerHTML.trim() === '') {
+            console.log('No events loaded after 5 seconds, trying fallback');
+            
+            // Try direct fetch without HTMX header
+            fetch(`{{ url_for('sigmarules.flagged_events') }}?page=1&direct=1`)
+                .then(response => response.text())
+                .then(html => {
+                    console.log('Fallback response received, length:', html.length);
+                    
+                    // If we get a full page, extract just the events
+                    if (html.includes('events-container')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const fallbackContainer = doc.getElementById('events-container');
+                        if (fallbackContainer) {
+                            eventsContainer.innerHTML = fallbackContainer.innerHTML;
+                        }
+                    } else {
+                        eventsContainer.innerHTML = html;
+                    }
+                    
+                    eventsContainer.classList.remove('hidden');
+                    if (skeletonLoading) {
+                        skeletonLoading.classList.add('hidden');
+                    }
+                    completeProgress();
+                })
+                .catch(error => {
+                    console.error('Fallback also failed:', error);
+                    handleLoadingError(error);
+                });
+        }
+    }, 5000);
+});
+
+// Handle HTMX events for load more functionality
+document.addEventListener('htmx:beforeRequest', function(evt) {
+    // Handle load more button
+    if (evt.detail.elt && evt.detail.elt.id === 'load-more-container') {
+        const loadingIcon = evt.detail.elt.querySelector('#loading-more-indicator');
+        if (loadingIcon) {
+            loadingIcon.classList.remove('hidden');
+        }
+    }
+});
+
+document.addEventListener('htmx:afterOnLoad', function(evt) {
+    // Handle load more button
+    if (evt.detail.elt && evt.detail.elt.id === 'load-more-container') {
+        const loadingIcon = evt.detail.elt.querySelector('#loading-more-indicator');
+        if (loadingIcon) {
+            loadingIcon.classList.add('hidden');
+        }
+    }
+});
+
+// Add error handling for HTMX requests
+document.addEventListener('htmx:error', function(evt) {
+    
+    // If it's a load more error, show a message in the load more container
+    if (evt.detail.elt && evt.detail.elt.id === 'load-more-container') {
+        evt.detail.elt.innerHTML = `
+            <div class="text-center py-4">
+                <div class="bg-red-900 text-red-100 p-4 rounded-lg inline-block">
+                    <p class="font-bold">Error loading more events</p>
+                    <p class="text-sm mt-1">Please try again or reload the page</p>
+                </div>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Flagged Event Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 bg-gray-900">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+      <a href="{{ url_for('sigmarules.flagged_events') }}" class="text-blue-400 hover:text-blue-300 mb-4 inline-flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Flagged Events
+      </a>
+      <h1 class="text-3xl font-extrabold text-white tracking-tight mb-2 flex items-center">
+        <i class="fas fa-eye text-blue-400 mr-2"></i> Flagged Event Details
+      </h1>
+      <p class="text-gray-400 text-lg">Sigma rule and event details for this flagged event.</p>
+    </div>
+    <div class="space-y-8">
+      <!-- Sigma Rule Details -->
+      <div class="bg-gray-900 rounded-xl shadow-lg border border-pink-500/40 p-6">
+        <h2 class="text-xl font-bold text-pink-400 mb-4 flex items-center">
+          <i class="fas fa-shield-alt mr-2"></i> Sigma Rule Details
+        </h2>
+        {% if matching_rule %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Title</p>
+            <p class="text-white font-semibold">{{ matching_rule.title }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Rule ID</p>
+            <p class="text-blue-300 font-mono">{{ matching_rule.id }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Severity</p>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if matching_rule.level == 'critical' %}bg-red-900 text-red-200{% elif matching_rule.level == 'high' %}bg-orange-900 text-orange-200{% elif matching_rule.level == 'medium' %}bg-yellow-900 text-yellow-200{% else %}bg-blue-900 text-blue-200{% endif %}">
+              <i class="fas fa-exclamation-triangle mr-1"></i>{{ matching_rule.level|capitalize }}
+            </span>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Tags</p>
+            <div class="flex flex-wrap gap-2">
+              {% for tag in matching_rule.tags %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-900/50 text-purple-200">
+                <i class="fas fa-tag mr-1"></i>{{ tag }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% if matching_rule.description %}
+        <div class="mb-2">
+          <p class="text-gray-400 text-sm mb-1">Description</p>
+          <p class="text-white">{{ matching_rule.description }}</p>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-gray-400">No Sigma rule details available for this event.</div>
+        {% endif %}
+      </div>
+
+      <!-- Event Details -->
+      <div class="bg-gray-900 rounded-xl shadow-lg border border-blue-500/40 p-6">
+        <h2 class="text-xl font-bold text-blue-400 mb-4 flex items-center">
+          <i class="fas fa-info-circle mr-2"></i> Event Details
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Event Type</p>
+            <span class="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center min-w-[80px]
+              {% if log_type == 'sysmon' %}bg-blue-500/20 text-blue-400 border border-blue-500/30
+              {% elif log_type == 'application' %}bg-pink-500/20 text-pink-400 border border-pink-500/30
+              {% elif log_type == 'security' %}bg-purple-500/20 text-purple-400 border border-purple-500/30
+              {% elif log_type == 'system' %}bg-green-500/20 text-green-400 border border-green-500/30{% endif %}">
+              <i class="fas fa-tag mr-1"></i>{{ log_type|capitalize }}
+            </span>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Event ID</p>
+            <p class="text-blue-300 font-bold">#{{ log.event_id }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Timestamp</p>
+            <p class="text-white font-medium">{{ log.time_created.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Computer</p>
+            <p class="text-white font-medium">{{ log.computer }}</p>
+          </div>
+          {% if log_type == 'sysmon' or log_type == 'application' %}
+          <div>
+            <p class="text-gray-400 text-sm mb-1">User</p>
+            <p class="text-green-300 font-medium"><i class="fas fa-user mr-1"></i>{{ log.user }}</p>
+          </div>
+          {% elif log_type == 'security' %}
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Subject User</p>
+            <p class="text-green-300 font-medium"><i class="fas fa-user-shield mr-1"></i>{{ log.subject_user_name }}</p>
+          </div>
+          {% endif %}
+          {% if log_type == 'sysmon' or log_type == 'application' %}
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Process ID</p>
+            <p class="text-white font-medium">{{ log.process_id }}</p>
+          </div>
+          {% endif %}
+        </div>
+        <!-- Extra details for each log type -->
+        {% if log_type == 'sysmon' %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Image</p>
+            <p class="text-white break-all">{{ log.image }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Company</p>
+            <p class="text-white">{{ log.company }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Signed</p>
+            <p class="text-white">{% if log.signed %}Yes{% else %}No{% endif %}</p>
+          </div>
+          {% if log.hashes %}
+          <div class="col-span-2">
+            <p class="text-gray-400 text-sm mb-1">Hashes</p>
+            <p class="text-white break-all font-mono text-xs">{{ log.hashes }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% elif log_type == 'application' %}
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Target Object</p>
+            <p class="text-white break-all">{{ log.target_object }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Event Type</p>
+            <p class="text-white">{{ log.event_type }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Details</p>
+            <p class="text-white break-all">{{ log.details }}</p>
+          </div>
+        </div>
+        {% elif log_type == 'security' %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Target User</p>
+            <p class="text-white">{{ log.target_user_name }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Domain</p>
+            <p class="text-white">{{ log.subject_domain_name }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Subject SID</p>
+            <p class="text-white font-mono text-xs">{{ log.subject_user_sid }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Logon ID</p>
+            <p class="text-white">{{ log.subject_logon_id }}</p>
+          </div>
+          {% if log.caller_process_name %}
+          <div class="col-span-2">
+            <p class="text-gray-400 text-sm mb-1">Caller Process</p>
+            <p class="text-white break-all">{{ log.caller_process_name }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% elif log_type == 'system' %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Provider</p>
+            <p class="text-white">{{ log.provider_name }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Record ID</p>
+            <p class="text-white">{{ log.event_record_id }}</p>
+          </div>
+          {% if log.event_data %}
+          <div class="col-span-2">
+            <p class="text-gray-400 text-sm mb-1">Event Data</p>
+            <div class="bg-gray-800 rounded p-3 mt-1 overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr>
+                    <th class="text-left text-blue-300 text-xs">Key</th>
+                    <th class="text-left text-blue-300 text-xs">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for key, value in log.event_data.items() %}
+                  <tr>
+                    <td class="text-gray-300 pr-4 text-xs font-mono">{{ key }}</td>
+                    <td class="text-white text-xs break-all">{{ value }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

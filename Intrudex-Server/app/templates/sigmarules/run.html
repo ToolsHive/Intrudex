@@ -1,0 +1,582 @@
+<!-- app/templates/sigmarules/run.html -->
+{% extends "base.html" %}
+{% block title %}Run Sigma Rules{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        Sigma Rules Analysis
+      </h1>
+      <p class="text-gray-400 text-lg" id="pageStatus">
+        {% if error %}
+          <span class="text-red-400">Error: {{ error }}</span>
+        {% elif loading %}
+          <span class="text-blue-400"><i class="fas fa-spinner fa-spin mr-2"></i>Analyzing security rules...</span>
+        {% else %}
+          Ready to analyze Sigma rules against your log data
+        {% endif %}
+      </p>
+    </div>
+
+    {% if error and not loading %}
+    <div class="bg-red-900/50 border border-red-500/50 rounded-xl p-6 mb-8">
+      <h2 class="text-red-200 font-bold text-lg mb-2">Error</h2>
+      <p class="text-red-300">{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Loading State -->
+
+    <div id="loadingState" class="{% if not loading %}hidden{% endif %}">
+      <div class="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-12 mb-8">
+        <div class="text-center">
+          <div class="flex flex-col gap-8 items-center">
+            <!-- Skeleton for stats cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
+              {% for _ in range(3) %}
+              <div class="bg-gray-800/80 rounded-xl p-6 border border-gray-700/30 animate-pulse">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="h-4 w-24 bg-gray-700 rounded mb-2"></div>
+                    <div class="h-8 w-16 bg-gray-700 rounded"></div>
+                  </div>
+                  <div class="bg-gray-700 rounded-lg p-3">
+                    <div class="h-6 w-6 bg-gray-600 rounded"></div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <!-- Skeleton for rules list -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+              {% for _ in range(6) %}
+              <div class="bg-gray-800/60 rounded-xl p-6 border border-gray-700/50 animate-pulse">
+                <div class="flex items-center mb-3">
+                  <div class="bg-gray-700 rounded-lg p-2 mr-3 border">
+                    <div class="h-4 w-4 bg-gray-600 rounded"></div>
+                  </div>
+                  <div>
+                    <div class="h-4 w-32 bg-gray-700 rounded mb-2"></div>
+                    <div class="h-3 w-20 bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+                <div class="h-3 w-full bg-gray-700 rounded mb-4"></div>
+                <div class="flex gap-3 mb-3">
+                  <div class="h-6 w-20 bg-gray-700 rounded"></div>
+                  <div class="h-6 w-16 bg-gray-700 rounded"></div>
+                </div>
+                <div class="flex gap-1">
+                  <div class="h-4 w-12 bg-gray-700 rounded"></div>
+                  <div class="h-4 w-8 bg-gray-700 rounded"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="mt-10">
+            <div class="h-4 w-48 bg-gray-700 rounded mx-auto mb-4 animate-pulse"></div>
+            <div class="h-3 w-96 bg-gray-700 rounded mx-auto animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Container -->
+    <div id="contentContainer" class="{% if loading %}hidden{% endif %}">
+      <!-- Enhanced Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="statsCards" style="display: none;">
+        <div class="bg-gradient-to-br from-blue-900/50 to-blue-800/50 backdrop-blur-lg rounded-xl p-6 border border-blue-500/30">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-blue-300 text-sm font-medium">Total Matches</p>
+              <p class="text-white text-3xl font-bold" id="totalMatchesCount">0</p>
+            </div>
+            <div class="bg-blue-500/20 rounded-lg p-3">
+              <i class="fas fa-bullseye text-blue-400 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-900/50 to-purple-800/50 backdrop-blur-lg rounded-xl p-6 border border-purple-500/30">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-purple-300 text-sm font-medium">Active Rules</p>
+              <p class="text-white text-3xl font-bold" id="activeRulesCount">0</p>
+            </div>
+            <div class="bg-purple-500/20 rounded-lg p-3">
+              <i class="fas fa-shield-alt text-purple-400 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-900/50 to-green-800/50 backdrop-blur-lg rounded-xl p-6 border border-green-500/30">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-green-300 text-sm font-medium">Detection Rate</p>
+              <p class="text-white text-3xl font-bold" id="detectionRate">0%</p>
+            </div>
+            <div class="bg-green-500/20 rounded-lg p-3">
+              <i class="fas fa-percentage text-green-400 text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matched rules summary -->
+      <div class="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-8 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-white flex items-center">
+            <i class="fas fa-shield-alt mr-3 text-purple-400"></i>
+            Matched Rules
+          </h2>
+          <div class="flex items-center space-x-4">
+            <span class="text-gray-400 text-sm" id="rulesCountDisplay">Loading...</span>
+            <!-- Rule Pagination Controls -->
+            <div class="flex items-center space-x-2" id="rulePaginationControls" style="display: none;">
+              <button onclick="loadRulePage(currentRulePage - 1)" id="rulePrevBtn" 
+                      class="px-3 py-1 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="text-gray-300 text-sm">
+                Page <span id="currentRulePageDisplay">1</span> of <span id="totalRulePagesDisplay">1</span>
+              </span>
+              <button onclick="loadRulePage(currentRulePage + 1)" id="ruleNextBtn"
+                      class="px-3 py-1 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="matchedRulesContainer">
+          <!-- Rules will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Matched events -->
+      <div class="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden">
+        <div class="p-8 border-b border-gray-700/50">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-white flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3 text-yellow-400"></i>
+                Security Events
+              </h2>
+              <p class="text-gray-400 text-sm mt-1" id="eventsSubtitle">Loading event matches...</p>
+            </div>
+            <!-- Event Pagination Controls -->
+            <div class="flex items-center space-x-4" id="eventPaginationControls" style="display: none;">
+              <span class="text-gray-400 text-sm" id="eventsCountDisplay">Loading...</span>
+              <div class="flex items-center space-x-2">
+                <button onclick="loadEventPage(currentPage - 1)" id="eventPrevBtn"
+                        class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="fas fa-chevron-left mr-1"></i> Previous
+                </button>
+                <span class="text-gray-300 text-sm px-3">
+                  Page <span id="currentPageDisplay">1</span> of <span id="totalPagesDisplay">1</span>
+                </span>
+                <button onclick="loadEventPage(currentPage + 1)" id="eventNextBtn"
+                        class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  Next <i class="fas fa-chevron-right ml-1"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="matchedEventsContainer">
+          <!-- Events will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Display -->
+    <div id="errorDisplay" class="hidden">
+      <div class="bg-red-900/50 border border-red-500/50 rounded-xl p-6 mb-8">
+        <h2 class="text-red-200 font-bold text-lg mb-2">Error Loading Data</h2>
+        <p class="text-red-300" id="errorMessage"></p>
+        <button onclick="loadRunData()" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition font-semibold">
+          <i class="fas fa-redo mr-2"></i>Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let isLoading = false;
+let currentPage = 1;
+let totalPages = 1;
+let currentRulePage = 1;
+let totalRulePages = 1;
+
+function updateDebugInfo(data) {
+    const debugElement = document.getElementById('debugInfo');
+    if (debugElement) {
+        debugElement.innerHTML = `DEBUG: matched_rules=${data.matched_rules?.length || 0}, matches=${data.matches?.length || 0}, total_rules=${data.total_rules || 0}, error=${data.error || 'none'}, page=${data.current_page || 1}/${data.total_pages || 1}, rule_page=${data.rule_current_page || 1}/${data.rule_total_pages || 1}`;
+    }
+}
+
+function updateStatsCards(data) {
+    document.getElementById('totalMatchesCount').textContent = data.total_matches || 0;
+    document.getElementById('activeRulesCount').textContent = data.matched_rules?.length || 0;
+    
+    const detectionRate = data.total_rules ? Math.round((data.matched_rules?.length || 0) / data.total_rules * 100) : 0;
+    document.getElementById('detectionRate').textContent = detectionRate + '%';
+    
+    document.getElementById('statsCards').style.display = 'grid';
+}
+
+function updatePaginationControls(data) {
+    // Update event pagination
+    currentPage = data.current_page || 1;
+    totalPages = data.total_pages || 1;
+    
+    document.getElementById('currentPageDisplay').textContent = currentPage;
+    document.getElementById('totalPagesDisplay').textContent = totalPages;
+    document.getElementById('eventsCountDisplay').textContent = `${data.matches?.length || 0} of ${data.total_matches || 0} events`;
+    
+    const eventPrevBtn = document.getElementById('eventPrevBtn');
+    const eventNextBtn = document.getElementById('eventNextBtn');
+    
+    eventPrevBtn.disabled = currentPage <= 1;
+    eventNextBtn.disabled = currentPage >= totalPages;
+    
+    if (totalPages > 1) {
+        document.getElementById('eventPaginationControls').style.display = 'flex';
+    }
+    
+    // Update rule pagination
+    currentRulePage = data.rule_current_page || 1;
+    totalRulePages = data.rule_total_pages || 1;
+    
+    document.getElementById('currentRulePageDisplay').textContent = currentRulePage;
+    document.getElementById('totalRulePagesDisplay').textContent = totalRulePages;
+    document.getElementById('rulesCountDisplay').textContent = `${data.matched_rules?.length || 0} rules shown`;
+    
+    const rulePrevBtn = document.getElementById('rulePrevBtn');
+    const ruleNextBtn = document.getElementById('ruleNextBtn');
+    
+    rulePrevBtn.disabled = currentRulePage <= 1;
+    ruleNextBtn.disabled = currentRulePage >= totalRulePages;
+    
+    if (totalRulePages > 1) {
+        document.getElementById('rulePaginationControls').style.display = 'flex';
+    }
+}
+
+function loadEventPage(page) {
+    if (page < 1 || page > totalPages || isLoading) return;
+    loadRunData(page, currentRulePage);
+}
+
+function loadRulePage(page) {
+    if (page < 1 || page > totalRulePages || isLoading) return;
+    loadRunData(currentPage, page);
+}
+
+function showError(message) {
+    console.error('Error:', message);
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('contentContainer').classList.add('hidden');
+    document.getElementById('errorDisplay').classList.remove('hidden');
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('pageStatus').innerHTML = `<span class="text-red-400">Error: ${message}</span>`;
+}
+
+function renderMatchedRules(rules) {
+    const container = document.getElementById('matchedRulesContainer');
+    
+    if (!rules || rules.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <div class="text-gray-500 mb-6">
+                    <i class="fas fa-search text-6xl"></i>
+                </div>
+                <h3 class="text-gray-300 text-xl font-bold mb-3">No Rules Matched</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">No security rules matched any recent log entries. This could indicate a secure environment or may require rule adjustment.</p>
+                <div class="flex items-center justify-center space-x-4 text-sm">
+                    <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg">
+                        <i class="fas fa-cogs mr-2 text-cyan-400"></i>
+                        Check Rule Configuration
+                    </div>
+                    <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg">
+                        <i class="fas fa-file-alt mr-2 text-blue-400"></i>
+                        Review Log Sources
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const rulesHtml = rules.map(rule => {
+        const levelColors = {
+            'critical': 'from-red-500/20 to-red-600/20 border-red-400/30 text-red-200',
+            'high': 'from-orange-500/20 to-orange-600/20 border-orange-400/30 text-orange-200',
+            'medium': 'from-yellow-500/20 to-yellow-600/20 border-yellow-400/30 text-yellow-200',
+            'low': 'from-blue-500/20 to-blue-600/20 border-blue-400/30 text-blue-200'
+        };
+        const levelIcons = {
+            'critical': 'fa-exclamation-triangle',
+            'high': 'fa-fire',
+            'medium': 'fa-exclamation',
+            'low': 'fa-info-circle'
+        };
+        
+        const levelClass = levelColors[rule.level] || 'from-gray-500/20 to-gray-600/20 border-gray-400/30 text-gray-200';
+        const levelIcon = levelIcons[rule.level] || 'fa-question';
+        
+        const tagsHtml = rule.tags ? rule.tags.slice(0, 3).map(tag => 
+            `<span class="text-xs bg-gray-700/50 text-gray-300 px-2 py-0.5 rounded-full border border-gray-600/30">${tag}</span>`
+        ).join('') + (rule.tags.length > 3 ? `<span class="text-xs bg-gray-700/50 text-gray-400 px-2 py-0.5 rounded-full border border-gray-600/30">+${rule.tags.length - 3} more</span>` : '') : '';
+        
+        return `
+            <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm group">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-3">
+                            <div class="bg-gradient-to-br ${levelClass} rounded-lg p-2 mr-3 border">
+                                <i class="fas ${levelIcon} text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-lg group-hover:text-blue-300 transition-colors">${rule.title}</h3>
+                                <span class="text-gray-400 text-xs">ID: ${rule.id}</span>
+                            </div>
+                        </div>
+                        
+                        ${rule.description ? `<p class="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">${rule.description}</p>` : ''}
+                        
+                        <div class="flex items-center gap-3 flex-wrap mb-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${levelClass} border">
+                                <i class="fas ${levelIcon} mr-1"></i> ${rule.level ? rule.level.charAt(0).toUpperCase() + rule.level.slice(1) : 'Unknown'}
+                            </span>
+                            <span class="text-gray-300 text-sm bg-gradient-to-r from-gray-700/50 to-gray-800/50 px-3 py-1 rounded-full border border-gray-600/30">
+                                <i class="fas fa-bullseye mr-1"></i>${rule.match_count} match${rule.match_count !== 1 ? 'es' : ''}
+                            </span>
+                        </div>
+                        
+                        ${tagsHtml ? `<div class="flex flex-wrap gap-1">${tagsHtml}</div>` : ''}
+                    </div>
+                    <div class="ml-4">
+                        <a href="/sigmarules/details/${rule.id}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-blue-500/25 text-sm font-medium group">
+                            <i class="fas fa-external-link-alt mr-2 group-hover:scale-110 transition-transform"></i>
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">${rulesHtml}</div>`;
+}
+
+function renderMatchedEvents(matches) {
+    const container = document.getElementById('matchedEventsContainer');
+
+    if (!matches || matches.length === 0) {
+        container.innerHTML = `
+            <div class="p-12 text-center">
+                <div class="text-gray-500 mb-6">
+                    <i class="fas fa-clipboard-list text-6xl"></i>
+                </div>
+                <h3 class="text-gray-300 text-xl font-bold mb-3">No Security Events Found</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">No events matched the current rules. This could indicate a secure environment or may require rule adjustment.</p>
+                <div class="flex items-center justify-center space-x-4 text-sm">
+                    <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg">
+                        <i class="fas fa-shield-alt mr-2 text-green-400"></i>
+                        System Secure
+                    </div>
+                    <div class="flex items-center text-gray-500 bg-gray-700/30 px-4 py-2 rounded-lg">
+                        <i class="fas fa-cogs mr-2 text-blue-400"></i>
+                        Adjust Rules
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const tableRows = matches.map(match => {
+        const levelColors = {
+            'critical': 'from-red-500/30 to-red-600/30 text-red-200 border-red-400/40',
+            'high': 'from-orange-500/30 to-orange-600/30 text-orange-200 border-orange-400/40',
+            'medium': 'from-yellow-500/30 to-yellow-600/30 text-yellow-200 border-yellow-400/40',
+            'low': 'from-blue-500/30 to-blue-600/30 text-blue-200 border-blue-400/40'
+        };
+        const levelIcons = {
+            'critical': 'fa-exclamation-triangle',
+            'high': 'fa-fire',
+            'medium': 'fa-exclamation',
+            'low': 'fa-info-circle'
+        };
+        const logTypeIcons = {
+            'sysmon': 'fa-cogs',
+            'application': 'fa-desktop',
+            'security': 'fa-lock',
+            'system': 'fa-server'
+        };
+        const logTypeColors = {
+            'sysmon': 'from-purple-500/20 to-purple-600/20 text-purple-300 border-purple-400/30',
+            'application': 'from-green-500/20 to-green-600/20 text-green-300 border-green-400/30',
+            'security': 'from-red-500/20 to-red-600/20 text-red-300 border-red-400/30',
+            'system': 'from-blue-500/20 to-blue-600/20 text-blue-300 border-blue-400/30'
+        };
+
+        const levelClass = levelColors[match.rule_level] || 'from-gray-500/30 to-gray-600/30 text-gray-200 border-gray-400/40';
+        const levelIcon = levelIcons[match.rule_level] || 'fa-question';
+        const logIcon = logTypeIcons[match.log_type] || 'fa-file-alt';
+        const logTypeClass = logTypeColors[match.log_type] || 'from-gray-500/20 to-gray-600/20 text-gray-300 border-gray-400/30';
+
+        const timeDisplay = match.time_created ? new Date(match.time_created).toLocaleDateString('en-US', {
+            month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'Unknown';
+
+        return `
+            <tr class="border-b border-gray-800/50 hover:bg-gradient-to-r hover:from-gray-800/30 hover:to-gray-700/30 transition-all duration-200 group">
+                <td class="py-4 px-6">
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r ${levelClass} border">
+                        <i class="fas ${levelIcon} mr-1"></i> ${match.rule_level ? match.rule_level.charAt(0).toUpperCase() + match.rule_level.slice(1) : 'Unknown'}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r ${logTypeClass} border">
+                        <i class="fas ${logIcon} mr-1"></i> ${match.log_type.charAt(0).toUpperCase() + match.log_type.slice(1)}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-blue-300 font-mono text-sm font-bold">#${match.log_id}</div>
+                    ${match.details ? `<div class="text-gray-400 text-xs mt-1 truncate max-w-[200px]">${match.details}</div>` : ''}
+                    ${match.event_id ? `<div class="text-purple-300 text-xs mt-1">Event: ${match.event_id}</div>` : ''}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-white font-semibold group-hover:text-blue-300 transition-colors">${match.rule_title}</div>
+                    <div class="text-gray-400 text-xs mt-1">ID: ${match.rule_id}</div>
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-green-300 font-medium">${match.computer}</div>
+                    <div class="text-blue-300 text-xs">${match.user}</div>
+                    ${match.process ? `<div class="text-orange-300 text-xs mt-1">${match.process}</div>` : ''}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-gray-300 text-xs font-medium">${timeDisplay}</div>
+                </td>
+                <td class="py-4 px-6">
+                    <a href="/sigmarules/event/${match.log_type}/${match.log_id}"
+                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-blue-500/25 text-xs font-semibold group">
+                        <i class="fas fa-eye mr-1 group-hover:scale-110 transition-transform"></i> View Event
+                    </a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="bg-gradient-to-r from-gray-800/80 to-gray-700/80 text-blue-300 border-b border-gray-700">
+                        <th class="py-4 px-6 font-bold text-left">Severity</th>
+                        <th class="py-4 px-6 font-bold text-left">Log Type</th>
+                        <th class="py-4 px-6 font-bold text-left">Event Info</th>
+                        <th class="py-4 px-6 font-bold text-left">Rule Title</th>
+                        <th class="py-4 px-6 font-bold text-left">System</th>
+                        <th class="py-4 px-6 font-bold text-left">Time</th>
+                        <th class="py-4 px-6 font-bold text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function loadRunData(page = 1, rulePage = 1) {
+    if (isLoading) {
+        return;
+    }
+    
+    isLoading = true;
+    
+    // Show loading state
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('contentContainer').classList.add('hidden');
+    document.getElementById('errorDisplay').classList.add('hidden');
+    document.getElementById('pageStatus').innerHTML = '<span class="text-blue-400"><i class="fas fa-spinner fa-spin mr-2"></i>Analyzing rules...</span>';
+
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 20,
+        rule_page: rulePage,
+        rule_per_page: 12
+    });
+
+    fetch(`/sigmarules/run/data?${params}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        isLoading = false;
+        
+        updateDebugInfo(data);
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Hide loading state
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('contentContainer').classList.remove('hidden');
+        
+        // Update stats cards
+        updateStatsCards(data);
+        
+        // Update pagination controls
+        updatePaginationControls(data);
+        
+        // Update page status
+        const totalMatches = data.total_matches || 0;
+        const totalRules = data.matched_rules?.length || 0;
+        const allRules = data.total_rules || 0;
+        document.getElementById('pageStatus').innerHTML = `Found ${totalMatches} security events across ${totalRules} rules${allRules ? ` (from ${allRules} total rules)` : ''}.`;
+        
+        // Update events subtitle
+        document.getElementById('eventsSubtitle').textContent = `${data.matches?.length || 0} event${(data.matches?.length || 0) !== 1 ? 's' : ''} on current page`;
+        
+        // Render the data
+        renderMatchedRules(data.matched_rules || []);
+        renderMatchedEvents(data.matches || []);
+        
+    })
+    .catch(error => {
+        console.error('Error loading run data:', error);
+        isLoading = false;
+        showError(error.message || 'Failed to load rule analysis data');
+    });
+}
+
+// Auto-load data when page loads (if not already loaded)
+document.addEventListener('DOMContentLoaded', function() {
+    const loadingElement = document.getElementById('loadingState');
+    const isInitiallyLoading = !loadingElement.classList.contains('hidden');
+    
+    if (isInitiallyLoading) {
+        // Add small delay to show loading animation
+        setTimeout(() => loadRunData(), 800);
+    } else {
+    }
+});
+</script>
+{% endblock %}
