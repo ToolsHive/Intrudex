@@ -28,7 +28,13 @@
 - [📚 Table of Contents](#-table-of-contents)
 - [🎯 Introduction](#-introduction)
 - [🖼️ Architecture Overview](#️-architecture-overview)
-- [⭐ Features](#-features)
+- [🎯 Motivation \& Problem Statement](#-motivation--problem-statement)
+- [⭐ Key Features (Expanded)](#-key-features-expanded)
+- [🛠️ How It Works](#️-how-it-works)
+- [🚀 Demo Scenarios](#-demo-scenarios)
+- [🧩 How to Extend](#-how-to-extend)
+- [🔒 Security \& Privacy](#-security--privacy)
+- [🚧 Known Limitations \& Future Work](#-known-limitations--future-work)
 - [🛠️ Technologies Used](#️-technologies-used)
 - [🛡️ INTRUDEX Server](#️-intrudex-server)
   - [⚙️ Prerequisites](#️-prerequisites)
@@ -141,17 +147,104 @@ flowchart TB
 
 ---
 
-## ⭐ Features
-- **Windows Log Monitoring** – Uses **Sysmon** and **Windows Event Logs** for security monitoring.  
-- **Sigma Rule-Based Detection** – Converts Sigma rules into **real-time security alerts**.  
-- **Standalone & Server Mode** – Can function **independently** or connect to a **Flask-based server**.  
-- **Windows Notifications** – Displays **security alerts** natively on Windows.  
-- **Automatic Threat Response (IPS)** – Blocks IPs, kills processes, and disables accounts upon threat detection.  
-- **Remote Command Execution** – Allows **remote security commands** from the web dashboard.  
-- **Self-Healing System** – Uses **registry entries and scheduled tasks** to prevent tampering.  
-- **Web Dashboard (Flask)** – Provides **log visualization, rule management, and remote control**.  
-- **Public/Private Key Authentication** – Ensures **secure client-server communication**.  
-- **Log Backup & Report Generator** – Stores logs in a **database** with export functionality.  
+## 🎯 Motivation & Problem Statement
+
+Modern Windows environments are under constant threat from malware, insider attacks, and misconfigurations. Traditional antivirus solutions often miss advanced threats. **Intrudex** provides a real-time, Sigma rule-based detection and response system, empowering defenders with instant visibility and automated response.
+
+---
+
+## ⭐ Key Features (Expanded)
+
+- **Real-Time Log Collection:**
+  Collects Windows Event Logs and Sysmon logs with minimal performance impact.
+
+- **Sigma Rule Engine:**
+  Converts human-readable Sigma rules into actionable detections.  
+  *Add your own rules in YAML format—no code required!*
+
+- **LOLBins & Suspicious Tool Detection:**
+  Instantly detects use of common living-off-the-land binaries (LOLBins) and admin tools, even if attackers try to blend in.
+
+- **Native Windows Notifications:**
+  Alerts appear instantly on the desktop, showing event details, rule names, and more.
+
+- **Centralized Web Dashboard:**
+  View all alerts, logs, and rule matches in a modern Flask-based dashboard.
+
+- **Self-Healing & Tamper Protection:**
+  Uses registry and scheduled tasks to ensure the agent cannot be easily disabled.
+
+- **Easy Integration:**
+  REST API for log shipping, remote commands, and integration with SIEM/SOAR platforms.
+
+---
+
+## 🛠️ How It Works
+
+1. **Log Collection:**
+   The C++ client subscribes to Windows Event Logs and Sysmon.
+
+2. **Rule Matching:**
+   Each event is checked against all loaded Sigma rules and a list of suspicious tools (LOLBins).
+
+3. **Alerting:**
+   On a match, the client:
+   - Shows a Windows notification
+   - Sends the event to the Flask server
+   - Optionally takes automated response actions
+
+4. **Dashboard:**
+   The Flask server displays all alerts, allows rule management, and provides analytics.
+
+---
+
+## 🚀 Demo Scenarios
+
+- **Test 1: PowerShell Detection**  
+  Open PowerShell and run any command.  
+  > You’ll see a Windows notification:  
+  > “Shell Command Detected: PowerShell or CMD process detected by Sigma rules.”
+
+- **Test 2: LOLBin Detection**  
+  Run `certutil.exe` or `wmic.exe` from CMD.  
+  > Notification:  
+  > “Suspicious Tool Detected: certutil.exe”
+
+- **Test 3: Sigma Rule Match**  
+  Trigger an event that matches a Sigma rule (e.g., failed logon).  
+  > Notification shows EventID and RuleName.
+
+- **Test 4: Dashboard**  
+  Open the web dashboard to view all alerts and logs in real time.
+
+---
+
+## 🧩 How to Extend
+
+- **Add New Sigma Rules:**  
+  Place new YAML files in the rules directory and restart the client.
+
+- **Add New Collectors:**  
+  Implement a new collector class and register it in `main.cpp`.
+
+- **Integrate with SIEM:**  
+  Use the REST API to forward alerts to your SIEM or SOAR platform.
+
+---
+
+## 🔒 Security & Privacy
+
+- All communication between client and server is authenticated and encrypted.
+- No sensitive data is stored unencrypted.
+- Only authorized users can access the dashboard and API.
+
+---
+
+## 🚧 Known Limitations & Future Work
+
+- Currently supports only Windows Event Logs and Sysmon.
+- Linux/Mac support planned for future versions.
+- More advanced response actions (e.g., network isolation) are in development.
 
 ---
 
