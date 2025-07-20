@@ -19,5 +19,12 @@
     "content_type": "application/xml",
     "use_https": false
   },
-  "default_flag": "background"
+  "default_flag": "background",
+  "sigma_url": "http://localhost/api/logs/sigma",
+  "sigma_event_log_source": "Security",
+  "sigma_event_filter": "*[System[(Level=4 or Level=0)]]",
+  "sigma_sleep_interval_ms": 1000,
+  "sigma_log_level": "info",
+  "sigma_rules_dir": "rules/sigma/",
+  "sigma_config_path": "config/sigma_config.json"
 }

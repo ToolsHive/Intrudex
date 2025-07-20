@@ -52,6 +52,8 @@ add_executable(${PROJECT_NAME}
         src/SystemLogCollector.cpp
         src/SystemHttpSender.cpp
         src/SigmaManager.cpp
+        src/SigmaLogCollector.cpp
+        src/SigmaEventLogInstaller.cpp
 )
 
 # Link Windows Event API
@@ -144,4 +146,33 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # Add the resource file to the executable
 if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
+endif()
+
+# --- [Message Resource Compilation for IntrudexSigma] ---
+if(WIN32)
+    set(SIGMA_MC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/assets/IntrudexSigma.mc)
+    set(SIGMA_RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/IntrudexSigma.rc)
+    set(SIGMA_BIN_FILE ${CMAKE_CURRENT_BINARY_DIR}/MSG00409.bin)
+
+    # Compile the .mc file to .rc and .bin using mc.exe
+    add_custom_command(
+        OUTPUT ${SIGMA_RC_FILE} ${SIGMA_BIN_FILE}
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/assets/mc.exe -h ${CMAKE_CURRENT_BINARY_DIR} -r ${CMAKE_CURRENT_BINARY_DIR} ${SIGMA_MC_FILE}
+        DEPENDS ${SIGMA_MC_FILE}
+        COMMENT "Compiling IntrudexSigma.mc to resource script and binary"
+    )
+
+    # Add the generated .rc file to the executable
+    target_sources(${PROJECT_NAME} PRIVATE ${SIGMA_RC_FILE})
+
+    # Copy .mc and .rc to build/assets after build
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${SIGMA_MC_FILE}
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/IntrudexSigma.mc
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${SIGMA_RC_FILE}
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/IntrudexSigma.rc
+        COMMENT "Copying IntrudexSigma.mc and .rc to build/assets folder"
+    )
 endif()

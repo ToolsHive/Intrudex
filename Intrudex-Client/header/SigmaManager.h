@@ -9,6 +9,7 @@ class SigmaManager {
 public:
     SigmaManager(const std::string& configPath, const std::string& rulesDir);
     void updateRules();
+    std::vector<std::unordered_map<std::string, std::string>> fetchRemoteRules();
 
 private:
     std::string apiBaseUrl;
@@ -18,7 +19,6 @@ private:
 
     void loadConfig();
     std::vector<std::string> getLocalRuleNames() const;
-    std::vector<std::unordered_map<std::string, std::string>> fetchRemoteRules();
     void downloadRule(const std::string& rulePath, const std::string& fileName);
     bool fileExists(const std::string& path);
     std::string httpGet(const std::string& urlPath);

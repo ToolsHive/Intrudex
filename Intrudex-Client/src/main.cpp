@@ -19,6 +19,8 @@
 #include "../header/SecurityLogCollector.h"
 #include "../header/SystemLogCollector.h"
 #include "../header/SigmaManager.h"
+#include "../header/SigmaLogCollector.h"
+#include "../header/SigmaEventLogInstaller.h"
 
 #include "../includes/json.hpp"
 #include "../includes/cxxopts.hpp"
@@ -534,6 +536,35 @@ int main(int argc, char* argv[]) {
             });
         }
 
+        // --- Register IntrudexSigma Event Source ---
+        std::wstring exePathW;
+        {
+            wchar_t exePath[MAX_PATH];
+            GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+            exePathW = exePath;
+        }
+        SigmaEventLogInstaller::installEventSource(L"IntrudexSigma", exePathW);
+
+        // --- SigmaLogCollector Integration ---
+        std::string sigmaUrl = config.value("sigma_url", "http://localhost/api/logs/sigma");
+        std::wstring sigmaEventLogSource = utf8_to_wstring(config.value("sigma_event_log_source", "Security"));
+        std::wstring sigmaEventFilter = utf8_to_wstring(config.value("sigma_event_filter", "*[System[(Level=4 or Level=0)]]"));
+        std::string sigmaLogLevel = config.value("sigma_log_level", "info");
+        std::string sigmaRulesDir = config.value("sigma_rules_dir", "rules/sigma/");
+        std::string sigmaConfigPath = config.value("sigma_config_path", "config/sigma_config.json");
+
+        SigmaLogCollector* sigmaCollector = nullptr;
+        std::thread sigmaThread;
+        if (disabled.find("sigma") == disabled.end()) {
+            sigmaCollector = new SigmaLogCollector(sigmaConfigPath, sigmaRulesDir);
+            sigmaThread = std::thread([&]() {
+                sigmaCollector->start();
+            });
+            std::cout << "[+] SigmaLogCollector started." << std::endl;
+        } else {
+            std::cout << "[SigmaLogCollector] Disabled by config or command line." << std::endl;
+        }
+
         if (timeout > 0) {
             std::thread([=]() {
                 std::this_thread::sleep_for(std::chrono::seconds(timeout));
@@ -544,6 +575,8 @@ int main(int argc, char* argv[]) {
         }
 
         for (auto& t : threads) t.join();
+
+        if (sigmaThread.joinable()) sigmaThread.join();
 
     } catch (const std::exception& e) {
         std::cerr << "\n[Exception] " << e.what() << "\n";
