@@ -598,3 +598,6 @@ clipboard.min.js
 
 fontawesome.min.css
 prism-tomorrow.min.css
+
+builder/Client/Intrudex_Client_Builder.exe
+builder/Client/Intrudex_Server.exe
