@@ -1,0 +1,213 @@
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 1em 0;
+}
+
+/* Image enhancements */
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Figure captions */
+figure {
+  text-align: center;
+  margin: 2em 0;
+}
+
+figcaption {
+  font-style: italic;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0.5em;
+}
+
+/* Image zoom on hover */
+.zoom-image {
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.zoom-image:hover {
+  transform: scale(1.05);
+}
+
+/* Back to top button */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.back-to-top:hover {
+  background: var(--md-accent-fg-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-default-bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-primary-fg-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-accent-fg-color);
+}
+
+/* Enhanced code blocks */
+.highlight {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Smooth animations for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom admonition styling */
+.md-typeset .admonition {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Table enhancements */
+.md-typeset table:not([class]) {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Reading time indicator */
+.reading-time {
+  font-family: var(--md-text-font);
+}
+
+/* Help modal styling */
+.help-content {
+  background: var(--md-default-bg-color);
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.shortcut-list {
+  margin: 1rem 0;
+}
+
+.shortcut-list div {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+kbd {
+  background: var(--md-default-fg-color--lightest);
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.8em;
+  font-family: monospace;
+}
+
+.close-help {
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Active TOC link highlighting */
+.md-nav--secondary a.active {
+  color: var(--md-accent-fg-color) !important;
+  font-weight: 600;
+}
+
+/* Print styles */
+@media print {
+  .back-to-top,
+  .md-header,
+  .md-sidebar,
+  .copy-code-btn {
+    display: none !important;
+  }
+  
+  .md-content {
+    margin: 0 !important;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus indicators */
+button:focus,
+a:focus {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+
+/* Toast notifications */
+.toast-container {
+  max-width: 300px;
+}
+
+.toast {
+  display: block;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+/* Enhanced code block styling */
+pre:hover .custom-copy-btn {
+  opacity: 0.8 !important;
+}
+
+.custom-copy-btn:hover {
+  opacity: 1 !important;
+  background: rgba(0,0,0,0.8) !important;
+}

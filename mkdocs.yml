@@ -1,0 +1,204 @@
+# ==================== Site Information ==================== 
+site_name: Intrudex Documentation
+site_description: "A cutting-edge, real-time security monitoring system, designed to revolutionize your network's defense"
+site_url: https://toolshive.github.io/Intrudex/
+repo_url: https://github.com/ToolsHive/Intrudex 
+
+# ==================== MkDocs Settings ====================
+use_directory_urls: true
+
+# ==================== Theme Configuration ==================== 
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/alpha-i-circle
+    favicon: material/file-document-outline
+    previous: fontawesome/solid/angle-left
+    next: fontawesome/solid/angle-right
+  palette:
+    # Auto mode - follows system preference
+    - media: "(prefers-color-scheme)"
+      primary: purple  
+      accent: deep purple  
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode  
+    
+    # Light mode configuration
+    - media: "(prefers-color-scheme: light)"
+      scheme: default  
+      primary: purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-night 
+        name: Switch to dark mode
+
+    # Dark mode configuration
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate  # Dark color scheme
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  
+  # ==================== Font Configuration ==================== 
+  font:
+    text: JetBrains Mono
+    code: Hack Nerd Font  
+
+  # ==================== Navigation and UI Features ==================== 
+  features:
+    - navigation.tabs
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - toc.follow
+    # - toc.integrate
+    - header.autohide
+    - navigation.footer
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+
+# ==================== Markdown Processing Extensions ==================== 
+markdown_extensions:
+  # Basic extensions
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  
+  # PyMdown extensions for enhanced features
+  - pymdownx.betterem
+  - pymdownx.blocks.caption
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.saneheaders
+  - pymdownx.magiclink
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.critic:
+      mode: view
+      
+  # Table of contents configuration
+  - toc:
+      title: On this page
+      permalink: true
+      permalink_title: Anchor link to this section for reference
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+  # Emoji support
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji 
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg  
+      options:
+        custom_icons:
+          - assets/icons
+
+# ==================== Plugins ==================== 
+plugins:
+  - search
+  - offline
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
+      fallback_to_build_date: true
+      enable_git_follow: true  
+  # Privacy Plugin Configuration  
+  - privacy:
+      cache: true  
+      cache_dir: docs/.cache 
+      assets_fetch: true  
+      assets_fetch_dir: docs/assets
+
+# ==================== Extra Features ==================== 
+extra:
+  generator: false
+
+  # Cookie consent banner
+  consent:
+    enabled: true
+    cookie_name: intrudex_cookie_consent
+    title: Cookie consent 
+    description: >- 
+      We use cookies to improve your browsing experience and remember your preferences.
+      These cookies are only used locally and no data is shared with third parties.
+    actions:
+      - accept  
+      - reject
+      - settings
+    cookies:
+      - name: intrudex_cookie_consent
+        description: Stores your cookie consent preference.
+        lifetime: 10
+      - name: intrudex_theme
+        description: Stores your theme preference (dark/light).
+        lifetime: 365
+      - name: intrudex_nav
+        description: Remembers your navigation settings.
+        lifetime: 30
+      - name: intrudex_search
+        description: Remembers your last search query.
+        lifetime: 7
+      - name: intrudex_social
+        description: Remembers your social link interactions.
+        lifetime: 30
+
+  # Social media links in footer
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/Armoghan-ul-Mohmin
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/Armoghan12
+    - icon: fontawesome/brands/linkedin
+      link: http://www.linkedin.com/in/armoghan-ul-mohmin-4289a9248
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/___armoghan/
+    - icon: fontawesome/brands/facebook
+      link: https://www.facebook.com/armoghanul.mohmin
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:Armoghan@proton.me
+    - icon: fontawesome/solid/globe
+      link: https://Armoghan.netlify.app
+
+# ==================== Copyright ==================== 
+copyright: >
+  Copyright &copy; 2025 <a href="https://github.com/Armoghan-ul-Mohmin" target="_blank">Armoghan-ul-Mohmin</a>.
+  All rights reserved.
+
+# Mermaid and custom styling
+extra_css:
+  - assets/css/styles.css
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js
+  - assets/js/mermaid-config.js
+  - assets/js/script.js
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
