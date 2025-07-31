@@ -1,0 +1,24 @@
+version: '3'
+services:
+  web:
+    image: armoghan/intrudex-server:1.0.0-prod
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: gunicorn --bind 0.0.0.0:80 wsgi:app
+    expose:
+      - "80"
+    volumes:
+      - ./Intrudex-Server/nginx.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - FLASK_ENV=production
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+    volumes:
+      - ./Intrudex-Server/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx-certs:/etc/nginx/certs:ro
+    depends_on:
+      - web
