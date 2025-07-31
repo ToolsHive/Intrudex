@@ -41,9 +41,24 @@ jobs:
           cmake -S Intrudex-Client -B Intrudex-Client\Build-Files -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
           cmake --build Intrudex-Client\Build-Files -- -j4
 
-      - name: 📦 Create Zip Archive of Final Build
+      - name: 🏷️ Extract Version from version.rc
+        id: get_version
+        shell: pwsh
         run: |
-          Compress-Archive -Path Intrudex-Client\Build-Files\*,README.md,LICENSE -DestinationPath intrudex-client-build.zip
+          $rcFile = "Intrudex-Client/version.rc"
+          if (!(Test-Path $rcFile)) { $rcFile = "Intrudex-Client/version.rc" }
+          $versionLine = Select-String -Path $rcFile -Pattern 'FILEVERSION\s+([0-9, ]+)' | Select-Object -First 1
+          if ($versionLine) {
+            $ver = $versionLine.Matches[0].Groups[1].Value -replace '[ ,]+', '.'
+            $ver = $ver.Trim('.')
+            echo "VERSION=$ver" >> $env:GITHUB_ENV
+          } else {
+            echo "VERSION=unknown" >> $env:GITHUB_ENV
+          }
+
+      - name: 📦 Create Zip Archive of Build Folder
+        run: |
+          Compress-Archive -Path Intrudex-Client\build -DestinationPath intrudex-client-build.zip
           echo "BUILD_ZIP=intrudex-client-build.zip" >> $env:GITHUB_ENV
 
       - name: 📜 List Included Files
@@ -58,13 +73,13 @@ jobs:
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: "Intrudex Client - v${{ github.run_number }}"
+          tag_name: v${{ env.VERSION }}
+          name: "Intrudex Client - v${{ env.VERSION }}"
           body: |
-            ## 🔐 Intrudex Client - v${{ github.run_number }}
+            ## 🔐 Intrudex Client - v${{ env.VERSION }}
 
             ### 📦 Summary
-            - Version: `${{ github.run_number }}`
+            - Version: `${{ env.VERSION }}`
             - Commit: `${{ github.sha }}`
             - Branch: `${{ github.ref_name }}`
             - Author: `${{ github.actor }}`
@@ -76,9 +91,6 @@ jobs:
             ```
             ${{ env.INCLUDED_FILES }}
             ```
-
-            ### 🔖 Changelog
-            ${{ env.CHANGELOG }}
 
             ### ✅ Usage
             1. Extract `intrudex-client-build.zip`
