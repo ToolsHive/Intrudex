@@ -31,10 +31,13 @@ jobs:
           echo "Found mc.exe at $mcPath"
           echo "$mcPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: 🏗️ Build Project with CMake (NMake)
+      - name: Install MinGW
+        run: choco install mingw -y
+
+      - name: 🏗️ Build Project with CMake (MinGW)
         run: |
-          cmake -S Intrudex-Client -B Intrudex-Client\cmake-build-release -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build Intrudex-Client\cmake-build-release
+          cmake -S Intrudex-Client -B Intrudex-Client\cmake-build-release -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build Intrudex-Client\cmake-build-release -- -j4
 
       - name: 📦 Zip Final Build Folder
         run: |
