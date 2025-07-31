@@ -603,3 +603,12 @@ builder/Client/Intrudex_Client_Builder.exe
 builder/Client/Intrudex_Server.exe
 
 docs\.cache
+
+!mc.exe
+!snoretoast.exe
+!Sysmon.exe
+!Sysmon64.exe
+!Sysmon64a.exe
+
+test-build/
+test-features.md
