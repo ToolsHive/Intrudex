@@ -25,15 +25,28 @@ jobs:
       - name: Install MinGW
         run: choco install mingw -y
 
+      - name: ➕ Add mc.exe to PATH
+        run: |
+          $mcPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter mc.exe | Select-Object -First 1 -ExpandProperty DirectoryName
+          if (-not $mcPath) { throw "mc.exe not found in Windows Kits." }
+          echo "$mcPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: 🏗️ Build Project with CMake (MinGW)
         run: |
-          cmake -S Intrudex-Client -B Intrudex-Client\cmake-build-release -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build Intrudex-Client\cmake-build-release -- -j4
+          cmake -S Intrudex-Client -B Intrudex-Client\Build-Files -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build Intrudex-Client\Build-Files -- -j4
 
       - name: 📦 Zip Final Build Folder
         run: |
-          Compress-Archive -Path Intrudex-Client\cmake-build-release\* -DestinationPath intrudex-client-build.zip
+          Compress-Archive -Path Intrudex-Client\build\*,README.md,LICENSE -DestinationPath intrudex-client-build.zip
           echo "BUILD_ZIP=intrudex-client-build.zip" >> $env:GITHUB_ENV
+
+      - name: 🔖 Generate Changelog
+        id: changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          git log -1 --pretty=format:"* %s%n%n  Commit: %h by %an" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: 🏷️ Create Tag
         run: |
