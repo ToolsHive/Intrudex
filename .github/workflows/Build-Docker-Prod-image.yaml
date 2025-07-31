@@ -10,6 +10,10 @@ on:
         required: true
         default: "1.0.0"
 
+permissions:
+  contents: write
+  packages: write
+  
 jobs:
     
   build:
@@ -38,6 +42,7 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -f Dockerfile.prod -t $IMAGE_NAME:${VERSION}-prod .
+          echo "GHCR_IMAGE=ghcr.io/toolshive/intrudex" >> $GITHUB_ENV
 
       - name: Push Docker Image
         run: |
@@ -45,4 +50,5 @@ jobs:
 
       - name: Push to GitHub Container Registry
         run: |
+          docker tag $IMAGE_NAME:${VERSION}-prod $GHCR_IMAGE:${VERSION}-prod
           docker push $GHCR_IMAGE:${VERSION}-prod
