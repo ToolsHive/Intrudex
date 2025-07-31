@@ -38,7 +38,7 @@ jobs:
 
       - name: 📦 Zip Final Build Folder
         run: |
-          Compress-Archive -Path Intrudex-Client\build\*,README.md,LICENSE -DestinationPath intrudex-client-build.zip
+          Compress-Archive -Path Intrudex-Client\Build-Files\*,README.md,LICENSE -DestinationPath intrudex-client-build.zip
           echo "BUILD_ZIP=intrudex-client-build.zip" >> $env:GITHUB_ENV
 
       - name: 🔖 Generate Changelog
@@ -47,16 +47,6 @@ jobs:
           echo "CHANGELOG<<EOF" >> $GITHUB_ENV
           git log -1 --pretty=format:"* %s%n%n  Commit: %h by %an" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-      - name: 🏷️ Create Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag v${{ github.run_number }}
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-          git push origin v${{ github.run_number }}
 
       - name: 🚀 Create GitHub Release
         id: create_release
@@ -89,19 +79,6 @@ jobs:
             ---
             🧠 *Built and deployed automatically by GitHub Actions.*
 
-      - name: 📤 Upload Zipped Build Folder to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.run_number }}
-          files: |
-            ${{ env.BUILD_ZIP }}
-            Intrudex-Client/version.rc
-            🧠 *Built and deployed automatically by GitHub Actions.*
-
-      - name: 📤 Upload Zipped Build Folder to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.run_number }}
           files: |
             ${{ env.BUILD_ZIP }}
             Intrudex-Client/version.rc
