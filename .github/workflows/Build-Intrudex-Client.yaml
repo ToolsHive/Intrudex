@@ -16,20 +16,11 @@ jobs:
       - name: 📦 Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
 
-      - name: 🧰 Set up MSVC Developer Environment
-        uses: ilammy/msvc-dev-cmd@v1
-
       - name: 🛠 Show Tool Versions
         run: |
           cmake --version
-          cl 2>&1 | findstr "Version"
-
-      - name: ➕ Add mc.exe to PATH
-        run: |
-          $mcPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter mc.exe | Select-Object -First 1 -ExpandProperty DirectoryName
-          if (-not $mcPath) { throw "mc.exe not found in Windows Kits." }
-          echo "Found mc.exe at $mcPath"
-          echo "$mcPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          gcc --version
+          g++ --version
 
       - name: Install MinGW
         run: choco install mingw -y
@@ -80,6 +71,15 @@ jobs:
             - None reported yet. Open issues if any.
 
             ---
+            🧠 *Built and deployed automatically by GitHub Actions.*
+
+      - name: 📤 Upload Zipped Build Folder to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          files: |
+            ${{ env.BUILD_ZIP }}
+            Intrudex-Client/version.rc
             🧠 *Built and deployed automatically by GitHub Actions.*
 
       - name: 📤 Upload Zipped Build Folder to Release
