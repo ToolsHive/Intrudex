@@ -5,11 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  setup:
+  build_and_release:
     runs-on: windows-latest
-    outputs:
-      build_dir: ${{ steps.set_build_dir.outputs.build_dir }}
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v3
@@ -17,31 +20,15 @@ jobs:
       - name: 📦 Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
 
-      - name: Install MinGW
+      - name: 📥 Install MinGW
         run: choco install mingw -y
 
       - name: ➕ Add mc.exe to PATH
+        shell: pwsh
         run: |
           $mcPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter mc.exe | Select-Object -First 1 -ExpandProperty DirectoryName
           if (-not $mcPath) { throw "mc.exe not found in Windows Kits." }
           echo "$mcPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Set build directory output
-        id: set_build_dir
-        run: echo "build_dir=Intrudex-Client\Build-Files" >> $GITHUB_OUTPUT
-
-  build:
-    runs-on: windows-latest
-    needs: setup
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Download environment artifact (if needed)
-        uses: actions/download-artifact@v3
-        with:
-          name: environment
-          path: .
 
       - name: 🛠 Show Tool Versions
         run: |
@@ -49,73 +36,26 @@ jobs:
           gcc --version
           g++ --version
 
-      - name: 🏗️ Build Project with CMake (MinGW)
+      - name: 🏗️ Configure & Build Project
         run: |
-          cmake -S Intrudex-Client -B ${{ needs.setup.outputs.build_dir }} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build ${{ needs.setup.outputs.build_dir }} -- -j4
+          cmake -S Intrudex-Client -B Intrudex-Client\Build-Files -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build Intrudex-Client\Build-Files -- -j4
 
-      - name: 📦 Upload Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-output
-          path: |
-            ${{ needs.setup.outputs.build_dir }}\*
-            README.md
-            LICENSE
-            Intrudex-Client/version.rc
-
-  package:
-    runs-on: windows-latest
-    needs: build
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build-output
-          path: package
-
-      - name: 📦 Zip Final Build Folder
+      - name: 📦 Create Zip Archive of Final Build
         run: |
-          Compress-Archive -Path package\* -DestinationPath intrudex-client-build.zip
+          Compress-Archive -Path Intrudex-Client\Build-Files\*,README.md,LICENSE -DestinationPath intrudex-client-build.zip
           echo "BUILD_ZIP=intrudex-client-build.zip" >> $env:GITHUB_ENV
-
-      - name: 📦 Upload Zipped Build
-        uses: actions/upload-artifact@v3
-        with:
-          name: zipped-build
-          path: intrudex-client-build.zip
-
-  release:
-    runs-on: windows-latest
-    needs: package
-    steps:
-      - name: Download zipped build
-        uses: actions/download-artifact@v3
-        with:
-          name: zipped-build
-          path: .
-
-      - name: 🔖 Generate Changelog
-        id: changelog
-        run: |
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          git log -1 --pretty=format:"* %s%n%n  Commit: %h by %an" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
 
       - name: 📜 List Included Files
         id: filelist
         run: |
-          powershell -Command "Expand-Archive -Path intrudex-client-build.zip -DestinationPath _release_temp"
-          ls _release_temp -Recurse | Select-Object -ExpandProperty FullName > included_files.txt
-          echo "INCLUDED_FILES<<EOF" >> $GITHUB_ENV
-          cat included_files.txt >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          Expand-Archive -Path intrudex-client-build.zip -DestinationPath _release_temp
+          Get-ChildItem _release_temp -Recurse | ForEach-Object { $_.FullName } | Out-File included_files.txt -Encoding utf8
+          echo "INCLUDED_FILES<<EOF" >> $env:GITHUB_ENV
+          Get-Content included_files.txt >> $env:GITHUB_ENV
+          echo "EOF" >> $env:GITHUB_ENV
 
       - name: 🚀 Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
@@ -130,7 +70,7 @@ jobs:
             - Author: `${{ github.actor }}`
             - Build Type: `Release`
             - Built On: `${{ runner.os }}`
-            - Build Date: `${{ github.event.head_commit.timestamp || github.event.head_commit.committer.date || github.event.commits[0].timestamp || github.run_started_at }}`
+            - Build Date: `${{ github.event.head_commit.timestamp || github.run_started_at }}`
 
             ### 📁 Included in Release
             ```
@@ -153,4 +93,3 @@ jobs:
 
           files: |
             intrudex-client-build.zip
-            package/version.rc
