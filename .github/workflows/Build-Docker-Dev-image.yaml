@@ -28,9 +28,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set version
-        run: echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-
       - name: Build Docker Image
         run: |
           docker build -t $IMAGE_NAME:${VERSION}-dev .
