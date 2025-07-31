@@ -1,0 +1,74 @@
+name: Build & Release Intrudex Client
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🛠 Show Tool Versions
+        run: |
+          cmake --version
+          cl 2>&1 | findstr "Version"
+
+      - name: 📦 Set up CMake
+        uses: jwlawson/actions-setup-cmake@v1
+
+      - name: 🧰 Set up MSVC Developer Environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: 🏗️ Build Project with CMake (NMake)
+        run: |
+          cmake -S Intrudex-Client -B Intrudex-Client\cmake-build-release -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build Intrudex-Client\cmake-build-release
+
+      - name: 📦 Zip Final Build Folder
+        run: |
+          Compress-Archive -Path Intrudex-Client\cmake-build-release\* -DestinationPath intrudex-client-build.zip
+          echo "BUILD_ZIP=intrudex-client-build.zip" >> $env:GITHUB_ENV
+
+      - name: 🚀 Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Intrudex Client - ${{ github.ref_name }}"
+          body: |
+            ## 🔐 Intrudex Client - ${{ github.ref_name }}
+
+            ### 📦 Summary
+            - Version: `${{ github.ref_name }}`
+            - Commit: `${{ github.sha }}`
+            - Build Type: `Release`
+            - Built On: `${{ runner.os }}`
+
+            ### 📁 Included in Release
+            - `intrudex-client.exe`
+            - All required `.dll`, `.pdb`, config files
+            - See build zip file for details
+
+            ### ✅ Usage
+            1. Extract `intrudex-client-build.zip`
+            2. Run `intrudex-client.exe`
+            3. Refer to README for config instructions
+
+            ### ⚠️ Known Issues
+            - None reported yet. Open issues if any.
+
+            ---
+            🧠 *Built and deployed automatically by GitHub Actions.*
+
+      - name: 📤 Upload Zipped Build Folder to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ${{ env.BUILD_ZIP }}
+            Intrudex-Client/version.rc
