@@ -1,0 +1,132 @@
+# =============================================================
+# Intrudex Server Dockerfile (Development)
+# Maintainer: Intrudex Team <Armoghan@proton.me>
+# Description: Dockerfile for building and running Intrudex Server in development mode
+# =============================================================
+
+FROM python:3.12.10-slim
+
+LABEL org.opencontainers.image.authors="Armoghan-ul-Mohmin <Armoghan@proton.me>"
+LABEL maintainer="Intrudex Team <Armoghan@proton.me>"
+LABEL org.opencontainers.image.title="Intrudex Server"
+LABEL org.opencontainers.image.description="Intrudex is a tool for detecting and analyzing intrusions in systems."
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.authors="Intrudex Team"
+LABEL org.opencontainers.image.created="2025-07-28"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/ToolsHive/Intrudex"
+
+# Build arguments for admin credentials
+ARG ADMIN_USERNAME=Admin
+ARG ADMIN_PASSWORD=admin
+
+# Set initial working directory
+WORKDIR /app
+
+# Install build and runtime dependencies
+RUN apt update && apt install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    curl \
+    nodejs \
+    npm \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Update pip
+RUN pip install --upgrade pip
+
+# Copy the server code and .git info (for submodules)
+COPY Intrudex-Server/ /app/Intrudex-Server/
+COPY .gitmodules /app/.gitmodules
+COPY .git /app/.git
+
+# Initialize and update submodules
+RUN git submodule update --init --recursive
+
+# Set working directory
+WORKDIR /app/Intrudex-Server
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Increase npm timeout and retries to avoid network issues
+RUN npm config set fetch-timeout 120000 && npm config set fetch-retries 10
+RUN npm config set registry https://registry.npmjs.org/
+
+# Install Node.js dependencies
+RUN npm install  --no-audit --no-fund
+
+# Build the frontend assets
+RUN npm run build
+
+# Remove node_modules and npm cache after build (frontend is now static)
+RUN rm -rf node_modules /root/.npm
+
+# Rename sample.env to .env
+RUN mv sample.env .env
+
+# Run Flask migrations
+RUN flask db init || true && \
+    flask db migrate -m "Initial migration" || true && \
+    flask db upgrade
+
+# Create admin user for Intrudex
+RUN python3 init_db.py --username ${ADMIN_USERNAME} --password ${ADMIN_PASSWORD}
+
+# Create a non-root user for running the application
+RUN useradd -m intrudex
+
+# Set environment variables for Flask
+ENV FLASK_APP=run.py
+ENV FLASK_ENV=development
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=80
+
+# Expose the port on which the server will run
+EXPOSE 80
+
+# Healthcheck to ensure the server is running
+HEALTHCHECK CMD curl --fail http://localhost:80/health || exit 1
+
+# Final Cleanup
+RUN apt-get purge -y build-essential nodejs npm && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Remove unnecessary files to reduce image size
+RUN rm -rf \
+    /app/.git \
+    /app/.gitmodules \
+    ~/.cache \
+    ~/.local \
+    ~/.npm \
+    ~/.config \
+    /var/lib/apt/lists/* \
+    /var/lib/dpkg/* \
+    /var/lib/log \
+    /root/.cache/pip \
+    /usr/share/doc \
+    /usr/share/man \
+    /usr/share/info \
+    /usr/share/locale \
+    /usr/share/zoneinfo \
+    /var/cache/* \
+    /var/lib/log/* \
+    /var/tmp/* \
+    /tmp/* \
+    /root/.cache \
+    /root/.npm \
+    /root/.config \
+    /root/.local
+
+# Now switch to non-root user
+USER intrudex
+
+# Set the entrypoint to run the Flask application
+ENTRYPOINT ["flask", "run"]
+
+# Default command to run the application
+CMD ["--host=0.0.0.0", "--port=80"]

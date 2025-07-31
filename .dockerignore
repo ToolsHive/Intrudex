@@ -1,0 +1,47 @@
+# This file is used to specify files and directories that should be ignored by Docker when building images.
+# It is similar to .gitignore but for Docker.
+# The following patterns will be ignored by Docker during the build process.
+
+# Folders
+node_modules/
+__pycache__/
+migrations/
+instance/
+build/
+dist/
+.venv/
+venv/
+.idea/
+.vscode/
+Sigma/
+
+# Files
+.env
+.env.*
+.spec
+package-lock.json
+npm-debug.log
+
+# File Extensions
+*.pyc
+*.log
+*.tmp
+*.swp
+*.bak
+*.pid
+*.db
+*.sqlite3
+*.tgz
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.tar
+*.gz
+*.ps1
+*.exe
+*.dll
+*.so
+*.pyd
+*.iml
+*.spec
