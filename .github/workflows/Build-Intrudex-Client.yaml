@@ -49,10 +49,13 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: 🏷️ Create Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v${{ github.run_number }}
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git push origin v${{ github.run_number }}
 
       - name: 🚀 Create GitHub Release
