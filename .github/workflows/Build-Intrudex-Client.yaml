@@ -23,6 +23,10 @@ jobs:
       - name: 📥 Install MinGW
         run: choco install mingw -y
 
+      # Install Inno Setup
+      - name: 📥 Install Inno Setup
+        run: choco install innosetup -y
+
       - name: ➕ Add mc.exe to PATH
         shell: pwsh
         run: |
@@ -41,6 +45,7 @@ jobs:
           cmake -S Intrudex-Client -B Intrudex-Client\Build-Files -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
           cmake --build Intrudex-Client\Build-Files -- -j4
 
+      # Extract version from version.rc
       - name: 🏷️ Extract Version from version.rc
         id: get_version
         shell: pwsh
@@ -56,6 +61,21 @@ jobs:
             echo "VERSION=unknown" >> $env:GITHUB_ENV
           }
 
+      - name: 📋 Prepare Installer Directory
+        run: |
+          Remove-Item -Recurse -Force Intrudex-Client\build -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path Intrudex-Client\build
+          Copy-Item -Recurse -Force Intrudex-Client\Build-Files\* Intrudex-Client\build\
+
+      # Ensure LICENSE is present for the installer
+      - name: 📄 Copy LICENSE for Installer
+        run: Copy-Item LICENSE Intrudex-Client-installer.iss -Destination Intrudex
+
+      - name: 🛠 Build Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Intrudex-Client-installer.iss"
+
       - name: 📦 Create Zip Archive of Build Folder
         run: |
           Compress-Archive -Path Intrudex-Client\build -DestinationPath intrudex-client-build.zip
@@ -65,7 +85,7 @@ jobs:
         id: filelist
         run: |
           Expand-Archive -Path intrudex-client-build.zip -DestinationPath _release_temp
-          Get-ChildItem _release_temp -Recurse | ForEach-Object { $_.FullName } | Out-File included_files.txt -Encoding utf8
+          Get-ChildItem _release_temp -Recurse | ForEach-Object { $_.Name } | Out-File included_files.txt -Encoding utf8
           echo "INCLUDED_FILES<<EOF" >> $env:GITHUB_ENV
           Get-Content included_files.txt >> $env:GITHUB_ENV
           echo "EOF" >> $env:GITHUB_ENV
@@ -74,34 +94,54 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
-          name: "Intrudex Client - v${{ env.VERSION }}"
+          name: "🚀 Intrudex Client v${{ env.VERSION }} Released!"
           body: |
-            ## 🔐 Intrudex Client - v${{ env.VERSION }}
+            <h2 align="center">🔐 <b>Intrudex Client v${{ env.VERSION }}</b> 🚀</h2>
+            <p align="center">
+              <img src="https://img.shields.io/github/v/release/ToolsHive/Intrudex?label=Latest%20Release&style=for-the-badge" />
+              <img src="https://img.shields.io/github/downloads/ToolsHive/Intrudex/total?style=for-the-badge" />
+            </p>
 
-            ### 📦 Summary
-            - Version: `${{ env.VERSION }}`
-            - Commit: `${{ github.sha }}`
-            - Branch: `${{ github.ref_name }}`
-            - Author: `${{ github.actor }}`
-            - Build Type: `Release`
-            - Built On: `${{ runner.os }}`
-            - Build Date: `${{ github.event.head_commit.timestamp || github.run_started_at }}`
+            ---
+            ### 🗒️ **Summary**
+            - **Version:** `${{ env.VERSION }}`
+            - **Commit:** `${{ github.sha }}`
+            - **Branch:** `${{ github.ref_name }}`
+            - **Author:** `${{ github.actor }}`
+            - **Build Type:** `Release`
+            - **Platform:** `${{ runner.os }}`
+            - **Build Date:** `${{ github.event.head_commit.timestamp || github.run_started_at }}`
+            - **Workflow:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            ### 📁 Included in Release
+            ### 📦 **Included in Release**
+            <details>
+            <summary>Click to expand file list</summary>
+
             ```
             ${{ env.INCLUDED_FILES }}
             ```
 
-            ### ✅ Usage
+            </details>
+
+            ### 🖥️ **Installer**
+            - Download and run: **Intrudex-Client-Setup.exe**
+
+            ### ✅ **Usage**
             1. Extract `intrudex-client-build.zip`
             2. Run `intrudex-client.exe`
-            3. Refer to README for config instructions
+            3. See README for configuration
 
-            ### ⚠️ Known Issues
-            - None reported yet. Open issues if any.
+            ### 💡 **Features**
+            - Fast, secure, and modern client
+            - Easy configuration
+            - Automatic updates
+
+            ### ⚠️ **Known Issues**
+            - None reported yet. Please [open an issue](https://github.com/ToolsHive/Intrudex/issues) if you find any.
 
             ---
-            🧠 *Built and deployed automatically by GitHub Actions.*
+            <p align="center">✨ Built and deployed automatically by <b>GitHub Actions</b> ✨</p>
 
           files: |
             intrudex-client-build.zip
+            Intrudex-Client-Setup.exe
