@@ -1,5 +1,5 @@
 # ==================== Site Information ==================== 
-site_name: Intrudex Documentation
+site_name: Intrudex
 site_description: "A cutting-edge, real-time security monitoring system, designed to revolutionize your network's defense"
 site_url: https://toolshive.github.io/Intrudex/
 repo_url: https://github.com/ToolsHive/Intrudex 
@@ -201,4 +201,5 @@ extra_javascript:
 
 nav:
   - Home: index.md
-  - Overview: overview.md
+  - What is Intrudex: Intrudex.md
+  - Installation: Install.md

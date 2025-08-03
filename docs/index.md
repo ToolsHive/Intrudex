@@ -11,17 +11,11 @@ search:
 
 Use the links below to explore all features and guides.
 > **Your central hub for all things Intrudex.**
----
-
-## 🚀 Quick Start
-
-- [Overview](overview.md)
-
----
 
 ## 📖 Table of Contents
 
-1. [Overview](overview.md)
+1. [What is Intrudex?](Intrudex.md)
+2. [Installation](Install.md)
 
 
 ---
