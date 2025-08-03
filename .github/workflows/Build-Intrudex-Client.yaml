@@ -23,7 +23,6 @@ jobs:
       - name: 📥 Install MinGW
         run: choco install mingw -y
 
-      # Install Inno Setup
       - name: 📥 Install Inno Setup
         run: choco install innosetup -y
 
@@ -45,36 +44,39 @@ jobs:
           cmake -S Intrudex-Client -B Intrudex-Client\Build-Files -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
           cmake --build Intrudex-Client\Build-Files -- -j4
 
-      # Extract version from version.rc
       - name: 🏷️ Extract Version from version.rc
         id: get_version
         shell: pwsh
         run: |
           $rcFile = "Intrudex-Client/version.rc"
-          if (!(Test-Path $rcFile)) { $rcFile = "Intrudex-Client/version.rc" }
           $versionLine = Select-String -Path $rcFile -Pattern 'FILEVERSION\s+([0-9, ]+)' | Select-Object -First 1
           if ($versionLine) {
             $ver = $versionLine.Matches[0].Groups[1].Value -replace '[ ,]+', '.'
             $ver = $ver.Trim('.')
             echo "VERSION=$ver" >> $env:GITHUB_ENV
           } else {
-            echo "VERSION=unknown" >> $env:GITHUB_ENV
+            echo "VERSION=0.0.1" >> $env:GITHUB_ENV
           }
 
-      - name: 📋 Prepare Installer Directory
+      - name: 📄 Copy Installer Script and License
+        shell: pwsh
         run: |
-          Remove-Item -Recurse -Force Intrudex-Client\build -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path Intrudex-Client\build
-          Copy-Item -Recurse -Force Intrudex-Client\Build-Files\* Intrudex-Client\build\
+          Copy-Item -Path "LICENSE", "Intrudex-Client-installer.iss" -Destination "Intrudex"
 
-      # Ensure LICENSE is present for the installer
-      - name: 📄 Copy LICENSE for Installer
-        run: Copy-Item LICENSE Intrudex-Client-installer.iss -Destination Intrudex
-
-      - name: 🛠 Build Installer
+      - name: 🛠 Build Installer using Inno Setup
         shell: pwsh
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Intrudex-Client-installer.iss"
+
+      - name: 📝 Move & Rename Setup for Release
+        shell: pwsh
+        run: |
+          $installerPath = Get-ChildItem -Recurse -Filter "Intrudex-Client-Setup-*.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($installerPath) {
+            Copy-Item $installerPath.FullName -Destination "Intrudex-Client-Setup.exe"
+          } else {
+            throw "Installer EXE not found!"
+          }
 
       - name: 📦 Create Zip Archive of Build Folder
         run: |
