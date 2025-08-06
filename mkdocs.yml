@@ -202,4 +202,14 @@ extra_javascript:
 nav:
   - Home: index.md
   - What is Intrudex: Intrudex.md
-  - Installation: Install.md
+  - Installation:
+    - Overview: installation/index.md
+    - Client Installation:
+      - Overview: installation/client/index.md
+      - Automated Installer: installation/client/windows-installer.md
+    - Server Installation:
+      - Overview: installation/server/index.md
+      - Development Environment: installation/server/development.md
+      - Production Environment: installation/server/production.md
+      - Docker Development: installation/server/docker-dev.md
+      - Docker Production: installation/server/docker-prod.md
