@@ -2,14 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://toolshive.github.io/Intrudex/index.html</loc>
-         <lastmod>2025-08-03</lastmod>
+         <lastmod>2025-08-07</lastmod>
     </url>
     <url>
          <loc>https://toolshive.github.io/Intrudex/Intrudex.html</loc>
-         <lastmod>2025-08-03</lastmod>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/about.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/contact.html</loc>
+         <lastmod>2025-08-07</lastmod>
     </url>
     <url>
          <loc>https://toolshive.github.io/Intrudex/overview.html</loc>
-         <lastmod>2025-08-03</lastmod>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/why-intrudex.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/index.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/client/index.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/client/windows-installer.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/client/windows-portable.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/client/windows-source.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/server/index.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/server/development.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/server/docker-dev.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/server/docker-prod.html</loc>
+         <lastmod>2025-08-07</lastmod>
+    </url>
+    <url>
+         <loc>https://toolshive.github.io/Intrudex/installation/server/production.html</loc>
+         <lastmod>2025-08-07</lastmod>
     </url>
 </urlset>

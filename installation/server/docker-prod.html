@@ -6,26 +6,32 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A cutting-edge, real-time security monitoring system, designed to revolutionize your network's defense">
+        <meta name="description" content="Enterprise Docker deployment with orchestration, security, and high availability">
       
       
       
+        <link rel="canonical" href="https://toolshive.github.io/Intrudex/installation/server/docker-prod.html">
       
       
+        <link rel="prev" href="docker-dev.html">
       
-      <link rel="icon" href="/Intrudex/assets/images/favicon.png">
+      
+        <link rel="next" href="../../about.html">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
-        <title>Intrudex</title>
+        <title>Docker Production Deployment - Intrudex</title>
       
     
     
-      <link rel="stylesheet" href="/Intrudex/assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="/Intrudex/assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -33,7 +39,7 @@
     
     
       
-        <script src="/Intrudex/docs/assets/unpkg.com/iframe-worker/shim.js"></script>
+        <script src="../../docs/assets/unpkg.com/iframe-worker/shim.js"></script>
       
     
     
@@ -41,14 +47,14 @@
         
         
         
-        <link rel="stylesheet" href="/Intrudex/docs/assets/fonts.googleapis.com/css.622a93ca.css">
+        <link rel="stylesheet" href="../../docs/assets/fonts.googleapis.com/css.622a93ca.css">
         <style>:root{--md-text-font:"JetBrains Mono";--md-code-font:"Hack Nerd Font"}</style>
       
     
     
-      <link rel="stylesheet" href="/Intrudex/assets/css/styles.css">
+      <link rel="stylesheet" href="../../assets/css/styles.css">
     
-    <script>__md_scope=new URL("/Intrudex/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -73,6 +79,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#docker-production-deployment" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/Intrudex/index.html" title="Intrudex" class="md-header__button md-logo" aria-label="Intrudex" data-md-component="logo">
+    <a href="../../index.html" title="Intrudex" class="md-header__button md-logo" aria-label="Intrudex" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2m2 5h-4v2h1v6h-1v2h4v-2h-1V9h1z"/></svg>
@@ -103,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Docker Production Deployment
             
           </span>
         </div>
@@ -224,7 +235,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/Intrudex/index.html" class="md-tabs__link">
+      <a href="../../index.html" class="md-tabs__link">
         
   
   
@@ -243,7 +254,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/Intrudex/Intrudex.html" class="md-tabs__link">
+      <a href="../../Intrudex.html" class="md-tabs__link">
         
   
   
@@ -262,7 +273,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/Intrudex/why-intrudex.html" class="md-tabs__link">
+      <a href="../../why-intrudex.html" class="md-tabs__link">
         
   
   
@@ -283,7 +294,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/Intrudex/installation/index.html" class="md-tabs__link">
+        <a href="../index.html" class="md-tabs__link">
           
   
   
@@ -303,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/Intrudex/installation/client/index.html" class="md-tabs__link">
+        <a href="../client/index.html" class="md-tabs__link">
           
   
   
@@ -319,11 +330,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/Intrudex/installation/server/index.html" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="index.html" class="md-tabs__link">
           
   
   
@@ -341,7 +354,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/Intrudex/about.html" class="md-tabs__link">
+      <a href="../../about.html" class="md-tabs__link">
         
   
   
@@ -360,7 +373,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/Intrudex/contact.html" class="md-tabs__link">
+      <a href="../../contact.html" class="md-tabs__link">
         
   
   
@@ -384,7 +397,9 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -395,7 +410,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/Intrudex/index.html" title="Intrudex" class="md-nav__button md-logo" aria-label="Intrudex" data-md-component="logo">
+    <a href="../../index.html" title="Intrudex" class="md-nav__button md-logo" aria-label="Intrudex" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2m2 5h-4v2h1v6h-1v2h4v-2h-1V9h1z"/></svg>
@@ -425,7 +440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/index.html" class="md-nav__link">
+      <a href="../../index.html" class="md-nav__link">
         
   
   
@@ -447,7 +462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/Intrudex.html" class="md-nav__link">
+      <a href="../../Intrudex.html" class="md-nav__link">
         
   
   
@@ -469,7 +484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/why-intrudex.html" class="md-nav__link">
+      <a href="../../why-intrudex.html" class="md-nav__link">
         
   
   
@@ -536,7 +551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/index.html" class="md-nav__link">
+      <a href="../index.html" class="md-nav__link">
         
   
   
@@ -611,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/client/index.html" class="md-nav__link">
+      <a href="../client/index.html" class="md-nav__link">
         
   
   
@@ -634,7 +649,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/client/windows-installer.html" class="md-nav__link">
+      <a href="../client/windows-installer.html" class="md-nav__link">
         
   
   
@@ -661,28 +676,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -695,7 +713,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Server Installation
@@ -709,7 +727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/server/index.html" class="md-nav__link">
+      <a href="index.html" class="md-nav__link">
         
   
   
@@ -732,7 +750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/server/development.html" class="md-nav__link">
+      <a href="development.html" class="md-nav__link">
         
   
   
@@ -755,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/server/production.html" class="md-nav__link">
+      <a href="production.html" class="md-nav__link">
         
   
   
@@ -778,7 +796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/installation/server/docker-dev.html" class="md-nav__link">
+      <a href="docker-dev.html" class="md-nav__link">
         
   
   
@@ -798,10 +816,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/Intrudex/installation/server/docker-prod.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Docker Production
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="docker-prod.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -812,6 +852,94 @@
   
 
       </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#production-docker-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Docker Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Docker Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-container-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Container Architecture
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Images
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Images">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-hub-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker Hub Images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-container-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Container Registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the Containers
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -831,7 +959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/about.html" class="md-nav__link">
+      <a href="../../about.html" class="md-nav__link">
         
   
   
@@ -853,7 +981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/Intrudex/contact.html" class="md-nav__link">
+      <a href="../../contact.html" class="md-nav__link">
         
   
   
@@ -876,6 +1004,8 @@
             
             
               
+                
+              
               <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
@@ -887,6 +1017,82 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#production-docker-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Docker Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Docker Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-container-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Container Architecture
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Images
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Images">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-hub-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker Hub Images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-container-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Container Registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the Containers
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -898,8 +1104,170 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
+  
 
+
+
+  
+  
+
+
+<h1 id="docker-production-deployment">Docker Production Deployment<a class="headerlink" href="#docker-production-deployment" title="Anchor link to this section for reference">&para;</a></h1>
+<p>This guide provides comprehensive instructions for deploying the Intrudex Server in production using Docker containers with enterprise-grade orchestration, security hardening, and high availability configurations.</p>
+<hr />
+<h2 id="production-docker-overview">Production Docker Overview<a class="headerlink" href="#production-docker-overview" title="Anchor link to this section for reference">&para;</a></h2>
+<div class="admonition info">
+<p class="admonition-title">Production Container Features</p>
+<p>The production Docker deployment includes multi-stage builds, security hardening, health checks, auto-scaling, load balancing, and comprehensive monitoring with Docker Swarm or Kubernetes orchestration.</p>
+</div>
+<h3 id="production-container-architecture">Production Container Architecture<a class="headerlink" href="#production-container-architecture" title="Anchor link to this section for reference">&para;</a></h3>
+<pre class="mermaid"><code>graph TB
+    subgraph "Load Balancer Layer"
+        LB[Load Balancer]
+        SSL[SSL Termination]
+    end
+
+    subgraph "Container Orchestration"
+        subgraph "Web Tier"
+            WEB1[Web Container 1]
+            WEB2[Web Container 2]
+            WEB3[Web Container 3]
+        end
+
+        subgraph "Database Tier"
+            DB_PRIMARY[(PostgreSQL Primary)]
+            DB_REPLICA[(PostgreSQL Replica)]
+        end
+
+        subgraph "Cache Tier"
+            REDIS_MASTER[(Redis Master)]
+            REDIS_REPLICA[(Redis Replica)]
+        end
+    end
+
+    subgraph "Infrastructure Services"
+        MONITOR[Monitoring]
+        LOGS[Log Aggregation]
+        BACKUP[Backup Service]
+        REGISTRY[Container Registry]
+    end
+
+    LB --&gt; SSL
+    SSL --&gt; WEB1
+    SSL --&gt; WEB2
+    SSL --&gt; WEB3
+    WEB1 --&gt; DB_PRIMARY
+    WEB2 --&gt; DB_PRIMARY
+    WEB3 --&gt; DB_PRIMARY
+    DB_PRIMARY --&gt; DB_REPLICA
+    WEB1 --&gt; REDIS_MASTER
+    WEB2 --&gt; REDIS_MASTER
+    WEB3 --&gt; REDIS_MASTER
+    REDIS_MASTER --&gt; REDIS_REPLICA
+
+    MONITOR --&gt; WEB1
+    MONITOR --&gt; WEB2
+    MONITOR --&gt; WEB3
+    LOGS --&gt; WEB1
+    LOGS --&gt; WEB2
+    LOGS --&gt; WEB3
+    BACKUP --&gt; DB_PRIMARY
+    REGISTRY --&gt; WEB1
+    REGISTRY --&gt; WEB2
+    REGISTRY --&gt; WEB3
+
+    style DB_PRIMARY fill:#336791
+    style REDIS_MASTER fill:#dc382d
+    style WEB1 fill:#3498db
+    style WEB2 fill:#3498db
+    style WEB3 fill:#3498db</code></pre>
+<hr />
+<h2 id="production-images">Production Images<a class="headerlink" href="#production-images" title="Anchor link to this section for reference">&para;</a></h2>
+<h3 id="docker-hub-images">Docker Hub Images<a class="headerlink" href="#docker-hub-images" title="Anchor link to this section for reference">&para;</a></h3>
+<p>The official Intrudex Docker images are available on Docker Hub:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Server Application - Development</span>
+docker<span class="w"> </span>pull<span class="w"> </span>armoghan/intrudex-server:1.0.0-dev
+
+<span class="c1"># Server Application - Production</span>
+docker<span class="w"> </span>pull<span class="w"> </span>armoghan/intrudex-server:1.0.0-prod
+</code></pre></div>
+<h3 id="github-container-registry">GitHub Container Registry<a class="headerlink" href="#github-container-registry" title="Anchor link to this section for reference">&para;</a></h3>
+<p>Alternative images from GitHub Container Registry:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Server Application - Development</span>
+docker<span class="w"> </span>pull<span class="w"> </span>ghcr.io/toolshive/intrudex:1.0.0-dev
+
+<span class="c1"># Server Application - Production</span>
+docker<span class="w"> </span>pull<span class="w"> </span>ghcr.io/toolshive/intrudex:1.0.0-prod
+
+<span class="c1"># Authentication required for private repositories</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$GITHUB_TOKEN</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>ghcr.io<span class="w"> </span>-u<span class="w"> </span>USERNAME<span class="w"> </span>--password-stdin
+</code></pre></div>
+<hr />
+<h2 id="running-the-containers">Running the Containers<a class="headerlink" href="#running-the-containers" title="Anchor link to this section for reference">&para;</a></h2>
+<p>After pulling the images, run the production container with:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>intrudex-server-prod<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgres://user:password@dbhost:5432/intrudex<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span>redis://redishost:6379/0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>armoghan/intrudex-server:1.0.0-prod
+</code></pre></div>
+<p>For GitHub Container Registry image:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>intrudex-server-prod<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgres://user:password@dbhost:5432/intrudex<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span>redis://redishost:6379/0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>ghcr.io/toolshive/intrudex:1.0.0-prod
+</code></pre></div>
+<p>Adjust environment variables and ports as needed for your setup.</p>
+<hr />
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 7, 2025 00:15:54 UTC">August 7, 2025</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 7, 2025 00:15:54 UTC">August 7, 2025</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+  
+
+
+
+                
               </article>
             </div>
           
@@ -911,6 +1279,46 @@
       
         <footer class="md-footer">
   
+    
+      
+        
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="docker-dev.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Docker Development">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256l137.3-137.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Docker Development
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../about.html" class="md-footer__link md-footer__link--next" aria-label="Next: About">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                About
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
     
   
   <div class="md-footer-meta md-typeset">
@@ -1091,16 +1499,16 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "/Intrudex/", "features": ["navigation.tabs", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.path", "toc.follow", "header.autohide", "navigation.footer", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "/Intrudex/assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.path", "toc.follow", "header.autohide", "navigation.footer", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/Intrudex/assets/javascripts/bundle.56ea9cef.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
-        <script src="/Intrudex/docs/assets/unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="../../docs/assets/unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
       
-        <script src="/Intrudex/assets/js/mermaid-config.js"></script>
+        <script src="../../assets/js/mermaid-config.js"></script>
       
-        <script src="/Intrudex/assets/js/script.js"></script>
+        <script src="../../assets/js/script.js"></script>
       
     
   </body>
