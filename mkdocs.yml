@@ -202,6 +202,7 @@ extra_javascript:
 nav:
   - Home: index.md
   - What is Intrudex: Intrudex.md
+  - Why Intrudex: why-intrudex.md
   - Installation:
     - Overview: installation/index.md
   - Client Installation:
@@ -213,3 +214,5 @@ nav:
     - Production Environment: installation/server/production.md
     - Docker Development: installation/server/docker-dev.md
     - Docker Production: installation/server/docker-prod.md
+  - About: about.md
+  - Contact: contact.md
