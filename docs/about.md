@@ -122,7 +122,7 @@ Armoghan-ul-Mohmin is a passionate security researcher and software engineer ded
 - **LinkedIn**: [Armoghan-ul-Mohmin](https://www.linkedin.com/in/armoghan-ul-mohmin-4289a9248)
 - **Github**: [Armoghan-ul-Mohmin](https://github.com/Armoghan-ul-Mohmin) 
 - **Website**: [Armoghan.netlify.app](https://Armoghan.netlify.app)
-- **Email**: [Armoghan@proton.me](Armoghan@proton.me)
+- **Email**: [Armoghan@proton.me](mailto:Armoghan@proton.me)
 
 #### Expertise Areas
 - **Cybersecurity**: Threat detection, incident response, security architecture

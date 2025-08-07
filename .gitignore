@@ -609,6 +609,3 @@ docs\.cache
 !Sysmon.exe
 !Sysmon64.exe
 !Sysmon64a.exe
-
-test-build/
-test-features.md
