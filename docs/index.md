@@ -16,7 +16,7 @@ Use the links below to explore all features and guides.
 
 1. [What is Intrudex?](Intrudex.md)
 2. [Why Intrudex?](why-intrudex.md)
-3. [Installation](Install.md)
+3. [Installation](installation/index.md)
 4. [Client Installation](installation/client/index.md)
     - [Automated Installer](installation/client/windows-installer.md)
     - [Portable Install](installation/client/windows-portable.md)
