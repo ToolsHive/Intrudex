@@ -1,3 +1,9 @@
+<h1 align="center">
+ 
+INTRUDEX was developed as a final-year university project. It is no longer actively maintained and has known limitations and design flaws that make it unsuitable for real-world use. I’ve decided to keep it as a reference instead of continuing development.
+ 
+</h1>
+
 <h1 align="center">🛡️ Intrudex</h1>
 
 <div align="center">
